@@ -5,6 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2A03BEC9-C788-45EC-AA51-341268BAC375}"
 	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
 		global.json = global.json
 	EndProjectSection
 EndProject
@@ -12,9 +13,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{6B414F17-C85
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{85478875-E950-4D1A-B1DA-0FDC96B9586C}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testcontainers.Microcks.Tests", "tests\Testcontainers.Microcks.Tests\Testcontainers.Microcks.Tests.csproj", "{9FC22581-0B9C-4B25-B10B-BCAF4A41497F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microcks.Testcontainers.Tests", "tests\Microcks.Testcontainers.Tests\Microcks.Testcontainers.Tests.csproj", "{9FC22581-0B9C-4B25-B10B-BCAF4A41497F}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Testcontainers.Microcks", "src\Testcontainers.Microcks\Testcontainers.Microcks.csproj", "{AD1DD5BB-8F23-4529-94D6-6F2963A094FD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Microcks.Testcontainers", "src\Microcks.Testcontainers\Microcks.Testcontainers.csproj", "{AD1DD5BB-8F23-4529-94D6-6F2963A094FD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
