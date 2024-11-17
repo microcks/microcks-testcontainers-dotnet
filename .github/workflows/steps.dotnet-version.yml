@@ -1,0 +1,40 @@
+﻿on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+    outputs:
+      version:
+        description: 'The version based on git history (gitversion)'
+        value: ${{ jobs.define_version.outputs.version }}
+jobs:
+  define_version:
+    runs-on: ${{ inputs.runs-on }}
+
+    outputs:
+      version: ${{ steps.gitversion.outputs.fullSemVer }}
+
+    steps:
+    - name: 🔄 Checkout
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+        fetch-depth: 0
+
+    - name: 🛠️ Install GitVersion
+      uses: gittools/actions/gitversion/setup@v3.0.0
+      with:
+        versionSpec: '6.x'
+
+    - id: gitversion
+      name: 🏃 GitVersion
+      uses: gittools/actions/gitversion/execute@v3.0.0
+      with:
+          useConfigFile: true
+
+    - name: Display GitVersion outputs
+      run: |
+        echo "Version: ${{ steps.gitversion.outputs.fullSemVer }}"
+        echo "MajorMinorPatch: ${{ steps.gitversion.outputs.majorMinorPatch }}"

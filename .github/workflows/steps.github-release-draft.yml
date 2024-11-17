@@ -1,0 +1,29 @@
+﻿on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: ubuntu-latest
+      version:
+        required: true
+        type: string
+
+jobs:
+  release_drafter:
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+    - name: 🔄 Checkout
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+        fetch-depth: 0
+
+    - name: Release Drafter
+      uses: release-drafter/release-drafter@v6.0.0
+      with:
+        version: ${{ inputs.version }}
+        publish: true
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

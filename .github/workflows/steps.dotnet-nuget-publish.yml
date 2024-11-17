@@ -1,0 +1,27 @@
+on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+    secrets:
+      NUGET_KEY:
+        required: true
+jobs:
+  nuget-publish:
+    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.repository == 'microcks/microcks-testcontainers-dotnet' }}
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+    - name: 📥 Download artifact
+      uses: actions/download-artifact@v4
+      with:
+        name: nugets_${{ inputs.runs-on }}
+        path: nuget_packages
+
+    - name: 🚀 Publish Package to NuGet
+      run: dotnet nuget push nuget_packages/**/*.nupkg  `
+        -k ${{ secrets.NUGET_KEY }}  `
+        --skip-duplicate -n `
+        -s https://api.nuget.org/v3/index.json
+      shell: pwsh
