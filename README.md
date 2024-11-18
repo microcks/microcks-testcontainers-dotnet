@@ -7,7 +7,7 @@
 ### Include it into your project dependencies
 
 ```
-dotnet add package Microcks.Testcontainers
+dotnet add package Microcks.Testcontainers --version 0.1.0
 ```
 
 ### Startup the container
