@@ -69,7 +69,7 @@ jobs:
       # write permission is required for autolabeler
       # otherwise, read permission is required at least
       pull-requests: read
-    if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' }}
+    if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' && !needs.version.outputs.preReleaseTag }}
     needs: 
       - commitlint
       - version

@@ -9,12 +9,20 @@
       version:
         description: 'The version based on git history (gitversion)'
         value: ${{ jobs.define_version.outputs.version }}
+      preReleaseTag:
+        description: 'preReleaseTag (gitversion)'
+        value: ${{ jobs.define_version.outputs.preReleaseTag }}
+      majorMinorPatch:
+        description: 'majorMinorPatch (gitversion)'
+        value: ${{ jobs.define_version.outputs.majorMinorPatch }}
 jobs:
   define_version:
     runs-on: ${{ inputs.runs-on }}
 
     outputs:
       version: ${{ steps.gitversion.outputs.fullSemVer }}
+      preReleaseTag: ${{ steps.gitversion.outputs.preReleaseTag }}
+      majorMinorPatch: ${{ steps.gitversion.outputs.majorMinorPatch }}
 
     steps:
     - name: 🔄 Checkout
@@ -23,18 +31,27 @@ jobs:
         lfs: true
         fetch-depth: 0
 
-    - name: 🛠️ Install GitVersion
-      uses: gittools/actions/gitversion/setup@v3.0.0
-      with:
-        versionSpec: '6.x'
-
-    - id: gitversion
-      name: 🏃 GitVersion
-      uses: gittools/actions/gitversion/execute@v3.0.0
-      with:
-          useConfigFile: true
+    - name: Read version from Directory.Build
+      id: gitversion
+      if: github.ref == 'refs/heads/main'
+      run: |
+        [xml]$xml = Get-Content -Path .\Directory.Build.props
+        $majorMinorPatch = ([string]$xml.Project.PropertyGroup.VersionPrefix).Trim()
+        
+        if (-not [string]::IsNullOrEmpty($majorMinorPatch)) { $majorMinorPatch = $majorMinorPatch.Trim() }
+        echo "majorMinorPatch=$majorMinorPatch" >> $env:GITHUB_OUTPUT
+        
+        $preReleaseTag = ([string]$xml.Project.PropertyGroup.VersionSuffix).Trim()
+        if (-not [string]::IsNullOrEmpty($preReleaseTag)) { $preReleaseTag = $preReleaseTag.Trim() }
+        echo "preReleaseTag=$preReleaseTag" >> $env:GITHUB_OUTPUT
+        
+        $fullSemVer = $majorMinorPatch
+        if ([string]::IsNullOrEmpty($preReleaseTag) -eq $false) { $fullSemVer = "$majorMinorPatch-$preReleaseTag.$env:GITHUB_RUN_NUMBER" }
+        echo "fullSemVer=$fullSemVer" >> $env:GITHUB_OUTPUT
+      shell: pwsh
 
     - name: Display GitVersion outputs
       run: |
         echo "Version: ${{ steps.gitversion.outputs.fullSemVer }}"
         echo "MajorMinorPatch: ${{ steps.gitversion.outputs.majorMinorPatch }}"
+        echo "PreReleaseTag: ${{ steps.gitversion.outputs.preReleaseTag }}"
