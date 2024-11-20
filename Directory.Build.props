@@ -7,7 +7,7 @@
 
 		<Description>Microcks.Testcontainers for .NET</Description>
 		<Authors>Sébastien DEGODEZ</Authors>
-		<PackageIconUrl>https://microcks.io/images/logo/microcks-logo-blue-stack_hub6b138b944a2655a28b25da35122648c_37956_417x415_resize_lanczos_3.png</PackageIconUrl>
+		<PackageIconUrl>https://microcks.io/images/logo/microcks-logo-blue_hu47af0efdf36fc5a7558391bac5ae3ba7_29309_374x332_resize_lanczos_3.png</PackageIconUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
 		<PackageLicenseFile>LICENSE</PackageLicenseFile>
 		<PackageTags>docker;dotnet;testcontainers;testing;microcks</PackageTags>
