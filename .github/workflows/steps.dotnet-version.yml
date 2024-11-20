@@ -33,7 +33,6 @@ jobs:
 
     - name: Read version from Directory.Build
       id: gitversion
-      if: github.ref == 'refs/heads/main'
       run: |
         [xml]$xml = Get-Content -Path .\Directory.Build.props
         $majorMinorPatch = ([string]$xml.Project.PropertyGroup.VersionPrefix).Trim()
