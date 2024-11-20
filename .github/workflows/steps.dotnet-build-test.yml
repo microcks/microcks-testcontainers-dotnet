@@ -42,12 +42,13 @@ jobs:
       with:
         global-json-file: global.json
 
-    - name: 🛠️ Setup JDK 17
-      if: ${{ inputs.use-sonarcloud == true }}
-      uses: actions/setup-java@v4.5.0
-      with:
-        java-version: 17
-        distribution: 'zulu'
+    # We can remove this as JRE is automaticallu provisionned by Sonar
+    # - name: 🛠️ Setup JDK 17
+    #   if: ${{ inputs.use-sonarcloud == true }}
+    #   uses: actions/setup-java@v4.5.0
+    #   with:
+    #     java-version: 17
+    #     distribution: 'zulu'
 
     - name: 🛠️ Install SonarCloud scanner
       if: ${{ inputs.use-sonarcloud == true }}
@@ -58,9 +59,6 @@ jobs:
       
     - name: 🔧 Restore dependencies
       run: dotnet restore
-
-    - name: 🏗 Build
-      run: dotnet build --configuration Release --no-restore
 
     - name: 🔍 Start SonarQube Analysis
       if: ${{ inputs.use-sonarcloud == true }}
@@ -76,6 +74,9 @@ jobs:
         /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml" `
         /v:"${{ inputs.version }}"
       shell: pwsh
+
+    - name: 🏗 Build
+      run: dotnet build --configuration Release --no-restore
 
     - name: 🧪 Test .NET
       id: test
