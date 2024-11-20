@@ -7,11 +7,14 @@
 
 		<Description>Microcks.Testcontainers for .NET</Description>
 		<Authors>Sébastien DEGODEZ</Authors>
-		<PackageIconUrl>https://microcks.io/images/logo/microcks-logo-blue-stack_hub6b138b944a2655a28b25da35122648c_37956_417x415_resize_q90_h2_lanczos_3.webp</PackageIconUrl>
+		<PackageIconUrl>https://microcks.io/images/logo/microcks-logo-blue-stack_hub6b138b944a2655a28b25da35122648c_37956_417x415_resize_lanczos_3.png</PackageIconUrl>
 		<PackageReadmeFile>README.md</PackageReadmeFile>
+		<PackageLicenseFile>LICENSE</PackageLicenseFile>
+		<PackageLicenseUrl>https://github.com/microcks/microcks-testcontainers-dotnet/blob/main/LICENSE</PackageLicenseUrl>
 		<PackageTags>docker;dotnet;testcontainers;testing;microcks</PackageTags>
 		<RepositoryType>git</RepositoryType>
 		<RepositoryUrl>https://github.com/microcks/microcks-testcontainers-dotnet</RepositoryUrl>
+		<PackageProjectUrl>$(RepositoryUrl)</PackageProjectUrl>
 	</PropertyGroup>
 	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
