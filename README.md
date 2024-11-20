@@ -1,4 +1,6 @@
 # microcks-testcontainers-dotnet
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-testcontainers-dotnet.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-testcontainers-dotnet?ref=badge_shield)
+
 .NET lib for Testcontainers that enables embedding Microcks into your unit tests with lightweight, throwaway instance thanks to containers.
 
 
@@ -99,3 +101,7 @@ public async Task testOpenAPIContract()
 ```
 
 The `TestResult` gives you access to all details regarding success of failure on different test cases.
+
+
+## License
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-testcontainers-dotnet.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fmicrocks%2Fmicrocks-testcontainers-dotnet?ref=badge_large)
