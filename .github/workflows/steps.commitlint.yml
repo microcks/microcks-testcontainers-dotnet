@@ -1,0 +1,21 @@
+﻿on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+
+jobs:
+  commitlint:
+    name: Check Conventional Commits
+    runs-on: ${{ inputs.runs-on }}
+    steps:
+    - name: 🔄 Checkout
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+        fetch-depth: 0
+
+    - name: Conventional Commitlint
+      uses: opensource-nepal/commitlint@v1

@@ -1,0 +1,80 @@
+﻿name: 'Continuous Integration'
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+    DOTNET_CLI_TELEMETRY_OPTOUT: 1
+    DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+    DOTNET_NOLOGO: 1
+  
+jobs:
+  commitlint:
+    name: 📝 Commitlint
+    uses: ./.github/workflows/steps.commitlint.yml
+    secrets: inherit
+      
+  version:
+    name: Define Version
+    uses: ./.github/workflows/steps.dotnet-version.yml
+    with:
+      runs-on: ubuntu-latest
+    secrets: inherit
+
+  build_test:
+    name: 🔨 Build and test
+    needs:
+      - commitlint
+      - version
+    uses: ./.github/workflows/steps.dotnet-build-test.yml
+    with:
+      runs-on: ubuntu-latest
+      version: ${{ needs.version.outputs.version }}
+      publish-package: true
+      use-sonarcloud: false
+    secrets: inherit
+
+  publish_test:
+    name: 📊 Publish Test
+    permissions:
+      contents: read 
+      actions: read 
+      checks: write
+    needs:
+      - build_test
+    uses: ./.github/workflows/steps.publish-test-reporter.yml
+    with:
+      runs-on: ubuntu-latest
+    secrets: inherit
+
+  nuget_publish:
+    name: 📦 NuGet Publish
+    needs:
+      - commitlint
+      - build_test
+    if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' }}
+    uses: ./.github/workflows/steps.dotnet-nuget-publish.yml
+    secrets: inherit
+
+  release_drafter:
+    name: 📖 Draft Release
+    permissions:
+      # write permission is required to create a github release
+      contents: write
+      # write permission is required for autolabeler
+      # otherwise, read permission is required at least
+      pull-requests: read
+    if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' && !needs.version.outputs.preReleaseTag }}
+    needs: 
+      - commitlint
+      - version
+      - nuget_publish
+    uses: ./.github/workflows/steps.github-release-draft.yml
+    with:
+      version: ${{ needs.version.outputs.version }}
+    secrets: inherit

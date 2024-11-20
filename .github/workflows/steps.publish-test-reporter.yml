@@ -1,0 +1,20 @@
+﻿on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+
+jobs:
+  report:
+    runs-on: ${{ inputs.runs-on }}
+
+    steps:
+      - name: 📊 Publish Test Report
+        uses: dorny/test-reporter@v1.9.1
+        with:
+          artifact: ${{ inputs.runs-on }}
+          name: report (${{ inputs.runs-on }})
+          path: '*.trx'
+          reporter: dotnet-trx

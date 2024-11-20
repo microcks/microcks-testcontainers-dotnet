@@ -1,0 +1,127 @@
+﻿on:
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      use-sonarcloud:
+        required: false
+        type: boolean
+        default: false
+      version:
+        required: true
+        type: string
+      publish-package:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      SONAR_ORGANIZATION:
+        required: false
+      SONAR_PROJECT:
+        required: false
+    outputs:
+      publish-package:
+        description: 'Publish package is enabled ?'
+        value: ${{ jobs.build_test.outputs.publish-package }}
+jobs:
+  build_test:
+    runs-on: ${{ inputs.runs-on }}
+
+    outputs:
+      publish-package: ${{ inputs.publish-package }}
+
+    steps:
+    - name: 🔄 Checkout
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+        fetch-depth: 0
+
+    - name: 🛠️ Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: global.json
+
+    - name: 🛠️ Setup JDK 17
+      if: ${{ inputs.use-sonarcloud == true }}
+      uses: actions/setup-java@v4.5.0
+      with:
+        java-version: 17
+        distribution: 'zulu'
+
+    - name: 🛠️ Install SonarCloud scanner
+      if: ${{ inputs.use-sonarcloud == true }}
+      run: dotnet tool install --global dotnet-sonarscanner
+
+    - name: 🔧 Restore .NET Tools
+      run: dotnet tool restore  
+      
+    - name: 🔧 Restore dependencies
+      run: dotnet restore
+
+    - name: 🏗 Build
+      run: dotnet build --configuration Release --no-restore
+
+    - name: 🔍 Start SonarQube Analysis
+      if: ${{ inputs.use-sonarcloud == true }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        dotnet-sonarscanner begin `
+        /k:"${{ secrets.SONAR_PROJECT }}" `
+        /o:"${{ secrets.SONAR_ORGANIZATION }}" `
+        /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+        /d:sonar.host.url="https://sonarcloud.io" `
+        /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml" `
+        /v:"${{ inputs.version }}"
+      shell: pwsh
+
+    - name: 🧪 Test .NET
+      id: test
+      run: |
+        dotnet test --no-build `
+        --configuration Release `
+        --logger trx `
+        --collect:"XPlat Code Coverage" `
+        --results-directory testresults
+      shell: pwsh
+
+    - name: Stop SonarQube Analysis
+      if: ${{ inputs.use-sonarcloud == true && (success() || steps.test.conclusion == 'failure') }}
+      id: sonar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+
+    - name: 📤 Upload Test And Coverage Results
+      uses: actions/upload-artifact@v4
+      if: always() # run this step even if previous step failed
+      with:
+        name: ${{ inputs.runs-on }}
+        path: testresults
+
+    - name: 📦 Nuget Pack
+      if: ${{ inputs.publish-package }}
+      run: |
+        dotnet pack `
+        --include-source `
+        --configuration Release `
+        --no-build `
+        --no-restore `
+        --output ${{ github.workspace }}/nugets/ `
+        -p:PackageVersion="${{ inputs.version }}"
+      shell: pwsh
+
+    - name: 📤 Upload Nuget Package
+      uses: actions/upload-artifact@v4
+      if: ${{ inputs.publish-package }}
+      with:
+        if-no-files-found: error
+        name: nugets_${{ inputs.runs-on }}
+        path: nugets
+
