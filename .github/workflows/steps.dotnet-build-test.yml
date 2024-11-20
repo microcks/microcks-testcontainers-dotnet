@@ -17,9 +17,7 @@
         type: boolean
         default: false
     secrets:
-      SONAR_ORGANIZATION:
-        required: false
-      SONAR_PROJECT:
+      SONAR_TOKEN:
         required: false
     outputs:
       publish-package:
@@ -71,8 +69,8 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         dotnet-sonarscanner begin `
-        /k:"${{ secrets.SONAR_PROJECT }}" `
-        /o:"${{ secrets.SONAR_ORGANIZATION }}" `
+        /k:"microcmicrocks_microcks-testcontainers-java" `
+        /o:"microcks" `
         /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
         /d:sonar.host.url="https://sonarcloud.io" `
         /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml" `

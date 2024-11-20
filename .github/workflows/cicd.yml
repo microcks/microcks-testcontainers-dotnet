@@ -36,7 +36,7 @@ jobs:
       runs-on: ubuntu-latest
       version: ${{ needs.version.outputs.version }}
       publish-package: true
-      use-sonarcloud: false
+      use-sonarcloud: true
     secrets: inherit
 
   publish_test:
