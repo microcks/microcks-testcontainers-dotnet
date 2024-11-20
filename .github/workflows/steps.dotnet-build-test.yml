@@ -67,7 +67,7 @@ jobs:
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
       run: |
         dotnet-sonarscanner begin `
-        /k:"microcmicrocks_microcks-testcontainers-java" `
+        /k:"microcks_microcks-testcontainers-java" `
         /o:"microcks" `
         /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
         /d:sonar.host.url="https://sonarcloud.io" `
