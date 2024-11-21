@@ -72,6 +72,7 @@ jobs:
         /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
         /d:sonar.host.url="https://sonarcloud.io" `
         /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml" `
+        /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml `
         /v:"${{ inputs.version }}"
       shell: pwsh
 
@@ -80,12 +81,21 @@ jobs:
 
     - name: 🧪 Test .NET
       id: test
+      if: ${{ inputs.use-sonarcloud == false }}
       run: |
         dotnet test --no-build `
         --configuration Release `
         --logger trx `
         --collect:"XPlat Code Coverage" `
         --results-directory testresults
+      shell: pwsh
+
+    - name: 🧪 Test .NET with coverage
+      id: test
+      if: ${{ inputs.use-sonarcloud == true }}
+      run: |
+        dotnet tool install --global dotnet-coverage
+        dotnet-coverage collect --output-format xml --output "coverage.xml" "dotnet test --no-build --configuration Release --logger trx"
       shell: pwsh
 
     - name: Stop SonarQube Analysis
