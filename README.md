@@ -11,7 +11,9 @@
 
 ## Build Status
 
-Current development version is `0.1.0`.
+Latest released version is `0.1.0`.
+
+Current development version is `0.2.0`.
 
 #### Sonarcloud Quality metrics
 
