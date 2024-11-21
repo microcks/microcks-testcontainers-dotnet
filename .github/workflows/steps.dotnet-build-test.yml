@@ -91,7 +91,7 @@ jobs:
       shell: pwsh
 
     - name: 🧪 Test .NET with coverage
-      id: test
+      id: test-with-coverage
       if: ${{ inputs.use-sonarcloud == true }}
       run: |
         dotnet tool install --global dotnet-coverage
@@ -99,7 +99,7 @@ jobs:
       shell: pwsh
 
     - name: Stop SonarQube Analysis
-      if: ${{ inputs.use-sonarcloud == true && (success() || steps.test.conclusion == 'failure') }}
+      if: ${{ inputs.use-sonarcloud == true && (success() || steps.test-with-coverage.conclusion == 'failure') }}
       id: sonar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
