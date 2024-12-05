@@ -55,13 +55,13 @@ jobs:
       run: dotnet tool install --global dotnet-sonarscanner
 
     - name: 🔧 Restore .NET Tools
-      run: dotnet tool restore  
-      
+      run: dotnet tool restore
+
     - name: 🔧 Restore dependencies
       run: dotnet restore
 
     - name: 🔍 Start SonarQube Analysis
-      if: ${{ inputs.use-sonarcloud == true }}
+      if: ${{ inputs.use-sonarcloud == true && github.repository == 'microcks/microcks-testcontainers-dotnet' }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -99,7 +99,7 @@ jobs:
       shell: pwsh
 
     - name: Stop SonarQube Analysis
-      if: ${{ inputs.use-sonarcloud == true && (success() || steps.test-with-coverage.conclusion == 'failure') }}
+      if: ${{ inputs.use-sonarcloud == true && (success() || steps.test-with-coverage.conclusion == 'failure') && github.repository == 'microcks/microcks-testcontainers-dotnet' }}
       id: sonar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
