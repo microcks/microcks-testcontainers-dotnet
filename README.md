@@ -66,7 +66,7 @@ await container.StartAsync();
 
 ### Import content in Microcks
 
-To use Microcks mocks or contract-testing features, you first need to import OpenAPI, Postman Collection, GraphQL or gRPC artifacts. 
+To use Microcks mocks or contract-testing features, you first need to import OpenAPI, Postman Collection, GraphQL or gRPC artifacts.
 Artifacts can be imported as main/Primary ones or as secondary ones. See [Multi-artifacts support](https://microcks.io/documentation/using/importers/#multi-artifacts-support) for details.
 
 You can do it before starting the container using simple paths:
@@ -97,7 +97,7 @@ await container.StartAsync();
 
 ### Using mock endpoints for your dependencies
 
-During your test setup, you'd probably need to retrieve mock endpoints provided by Microcks containers to 
+During your test setup, you'd probably need to retrieve mock endpoints provided by Microcks containers to
 setup your base API url calls. You can do it like this:
 
 ```csharp
@@ -141,3 +141,69 @@ public async Task testOpenAPIContract()
 ```
 
 The `TestResult` gives you access to all details regarding success of failure on different test cases.
+
+### Advanced features with MicrocksContainersEnsemble
+
+The `MicrocksContainer` referenced above supports essential features of Microcks provided by the main Microcks container.
+The list of supported features is the following:
+
+* Mocking of REST APIs using different kinds of artifacts,
+* Contract-testing of REST APIs using `OPEN_API_SCHEMA` runner/strategy,
+* Mocking and contract-testing of SOAP WebServices,
+* Mocking and contract-testing of GraphQL APIs,
+* Mocking and contract-testing of gRPC APIs.
+
+To support features like Asynchronous contract-testing, we introduced `MicrocksContainersEnsemble` that allows managing
+additional Microcks services. `MicrocksContainersEnsemble` allow you to implement
+[Different levels of API contract testing](https://medium.com/@lbroudoux/different-levels-of-api-contract-testing-with-microcks-ccc0847f8c97)
+in the Inner Loop with Testcontainers!
+
+A `MicrocksContainersEnsemble` presents the same methods as a `MicrocksContainer`.
+You can create and build an ensemble that way:
+
+```csharp
+MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, MicrocksImage)
+    .WithMainArtifacts("pastry-orders-asyncapi.yml")
+    .WithKafkaConnection(new KafkaConnection($"kafka:19092"));
+
+ensemble.StartAsync();
+```
+
+A `MicrocksContainer` is wrapped by an ensemble and is still available to import artifacts and execute test methods.
+You have to access it using:
+
+```csharp
+MicrocksContainer microcks = ensemble.MicrocksContainer;
+microcks.ImportAsMainArtifact(...);
+```
+##### Using mock endpoints for your dependencies
+
+Once started, the `ensemble.AsyncMinionContainer` provides methods for retrieving mock endpoint names for the different
+supported protocols (Kafka only at the moment).
+
+```csharp
+string kafkaTopic = ensemble.AsyncMinionContainer
+    .GetKafkaMockTopic("Pastry orders API", "0.1.0", "SUBSCRIBE pastry/orders");
+```
+##### Launching new contract-tests
+
+Using contract-testing techniques on Asynchronous endpoints may require a different style of interacting with the Microcks
+container. For example, you may need to:
+1. Start the test making Microcks listen to the target async endpoint,
+2. Activate your System Under Tests so that it produces an event,
+3. Finalize the Microcks tests and actually ensure you received one or many well-formed events.
+
+For that the `MicrocksContainer` now provides a `TestEndpointAsync(TestRequest request)` method that actually returns a `Task<TestResult>`.
+Once invoked, you may trigger your application events and then `await` the future result to assert like this:
+
+```csharp
+// Start the test, making Microcks listen the endpoint provided in testRequest
+Task<TestResult> testResultFuture = ensemble.MicrocksContainer.TestEndpointAsync(testRequest);
+
+// Here below: activate your app to make it produce events on this endpoint.
+// myapp.InvokeBusinessMethodThatTriggerEvents();
+
+// Now retrieve the final test result and assert.
+TestResult testResult = await testResultFuture;
+testResult.IsSuccess.Should().BeTrue();
+```
