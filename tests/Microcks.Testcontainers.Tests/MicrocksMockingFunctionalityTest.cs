@@ -18,6 +18,7 @@
 using FluentAssertions;
 using NHamcrest;
 using NHamcrest.Core;
+using RestAssured.Logging;
 using RestAssured.Response;
 using System;
 using System.IO;
@@ -85,7 +86,7 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
         };
 
         var verifiableResponse = Given()
-          .Log(RestAssured.Request.Logging.RequestLogLevel.All)
+          .Log(new LogConfiguration { RequestLogLevel = RequestLogLevel.All })
           .When()
           .Get(uriBuilder.ToString())
           .Then()

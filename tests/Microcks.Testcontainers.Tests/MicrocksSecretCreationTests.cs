@@ -22,6 +22,7 @@ using System;
 using System.Net;
 using System.Text.Json;
 using Microcks.Testcontainers.Model;
+using RestAssured.Logging;
 
 namespace Testcontainers.Microcks.Tests;
 
@@ -46,7 +47,7 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
     {
         var result = await Given()
           .When()
-          .Log(RestAssured.Request.Logging.RequestLogLevel.Body)
+          .Log(new LogConfiguration { RequestLogLevel = RequestLogLevel.Body })
           .Get(_microcksContainer.GetHttpEndpoint() + "api/secrets")
           .Then()
           .StatusCode(HttpStatusCode.OK)
