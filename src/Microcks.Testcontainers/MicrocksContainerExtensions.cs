@@ -100,11 +100,11 @@ public static class MicrocksContainerExtensions
 
     private static async Task WaitForConditionAsync(Func<Task<bool>> condition, TimeSpan atMost, TimeSpan delay, TimeSpan interval)
     {
+        // Delay before first check
+        await Task.Delay(delay);
+
         // Cancel after atMost
         using var cancellationTokenSource = new CancellationTokenSource(atMost);
-
-        // Delay before first check
-        await Task.Delay(delay, cancellationTokenSource.Token);
 
         // Polling
         while (!await condition())
@@ -113,7 +113,7 @@ public static class MicrocksContainerExtensions
             {
                 throw new TaskCanceledException();
             }
-            await Task.Delay(interval, cancellationTokenSource.Token);
+            await Task.Delay(interval, CancellationToken.None);
         }
     }
 
