@@ -1,135 +1,143 @@
 ﻿on:
-    workflow_call:
-        inputs:
-            runs-on:
-                required: false
-                type: string
-                default: 'ubuntu-latest'
-            use-sonarcloud:
-                required: false
-                type: boolean
-                default: false
-            version:
-                required: true
-                type: string
-            publish-package:
-                required: false
-                type: boolean
-                default: false
-        secrets:
-            SONAR_TOKEN:
-                required: false
-        outputs:
-            publish-package:
-                description: 'Publish package is enabled ?'
-                value: ${{ jobs.build_test.outputs.publish-package }}
+  workflow_call:
+    inputs:
+      runs-on:
+        required: false
+        type: string
+        default: 'ubuntu-latest'
+      use-sonarcloud:
+        required: false
+        type: boolean
+        default: false
+      version:
+        required: true
+        type: string
+      publish-package:
+        required: false
+        type: boolean
+        default: false
+    secrets:
+      SONAR_TOKEN:
+        required: false
+    outputs:
+      publish-package:
+        description: 'Publish package is enabled ?'
+        value: ${{ jobs.build_test.outputs.publish-package }}
 jobs:
-    build_test:
-        runs-on: ${{ inputs.runs-on }}
+  build_test:
+    runs-on: ${{ inputs.runs-on }}
 
-        outputs:
-            publish-package: ${{ inputs.publish-package }}
+    outputs:
+      publish-package: ${{ inputs.publish-package }}
 
-        steps:
-            - name: 🔄 Checkout
-              uses: actions/checkout@v4
-              with:
-                  lfs: true
-                  fetch-depth: 0
+    steps:
+    - name: 🔄 Checkout
+      uses: actions/checkout@v4
+      with:
+        lfs: true
+        fetch-depth: 0
 
-            - name: 🛠️ Setup .NET
-              uses: actions/setup-dotnet@v4
-              with:
-                  global-json-file: global.json
+    - name: 🛠️ Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        global-json-file: global.json
 
-            # We can remove this as JRE is automaticallu provisionned by Sonar
-            # - name: 🛠️ Setup JDK 17
-            #   if: ${{ inputs.use-sonarcloud == true }}
-            #   uses: actions/setup-java@v4.5.0
-            #   with:
-            #     java-version: 17
-            #     distribution: 'zulu'
+    # We can remove this as JRE is automaticallu provisionned by Sonar
+    # - name: 🛠️ Setup JDK 17
+    #   if: ${{ inputs.use-sonarcloud == true }}
+    #   uses: actions/setup-java@v4.5.0
+    #   with:
+    #     java-version: 17
+    #     distribution: 'zulu'
 
-            - name: 🛠️ Install SonarCloud scanner
-              if: ${{ inputs.use-sonarcloud == true }}
-              run: dotnet tool install --global dotnet-sonarscanner
+    - name: 🛠️ Install SonarCloud scanner
+      if: ${{ inputs.use-sonarcloud == true }}
+      run: dotnet tool install --global dotnet-sonarscanner
 
-            - name: 🔧 Restore .NET Tools
-              run: dotnet tool restore
+    - name: 🔧 Restore .NET Tools
+      run: dotnet tool restore
 
-            - name: 🔧 Restore dependencies
-              run: dotnet restore
+    - name: 🔧 Restore dependencies
+      run: dotnet restore
 
-            - name: 🔍 Start SonarQube Analysis
-              if: ${{ inputs.use-sonarcloud == true }}
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              run: |
-                  dotnet-sonarscanner begin `
-                  /k:"microcks_microcks-testcontainers-dotnet" `
-                  /o:"microcks" `
-                  /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
-                  /d:sonar.host.url="https://sonarcloud.io" `
-                  /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml" `
-                  /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml `
-                  /v:"${{ inputs.version }}"
-              shell: pwsh
+    - name: 🔍 Start SonarQube Analysis
+      # Only run SonarCloud analysis only for the original repository and not for forks (either on push or PR from the same repo)
+      if: ${{ inputs.use-sonarcloud == true &&
+          ( github.repository == 'microcks/microcks-testcontainers-dotnet') &&
+          ( github.event_name != 'pull_request' || ( github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') ) }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        dotnet-sonarscanner begin `
+        /k:"microcks_microcks-testcontainers-dotnet" `
+        /o:"microcks" `
+        /d:sonar.token="${{ secrets.SONAR_TOKEN }}" `
+        /d:sonar.host.url="https://sonarcloud.io" `
+        /d:sonar.cs.opencover.reportsPaths="**/*.opencover.xml" `
+        /d:sonar.cs.vscoveragexml.reportsPaths=coverage.xml `
+        /v:"${{ inputs.version }}"
+      shell: pwsh
 
-            - name: 🏗 Build
-              run: dotnet build --configuration Release --no-restore
+    - name: 🏗 Build
+      run: dotnet build --configuration Release --no-restore
 
-            - name: 🧪 Test .NET
-              id: test
-              if: ${{ inputs.use-sonarcloud == false }}
-              run: |
-                  dotnet test --no-build `
-                  --configuration Release `
-                  --logger trx `
-                  --collect:"XPlat Code Coverage" `
-                  --results-directory testresults
-              shell: pwsh
+    - name: 🧪 Test .NET
+      id: test
+      if: ${{ inputs.use-sonarcloud == false }}
+      run: |
+        dotnet test --no-build `
+        --configuration Release `
+        --logger trx `
+        --collect:"XPlat Code Coverage" `
+        --results-directory testresults
+      shell: pwsh
 
-            - name: 🧪 Test .NET with coverage
-              id: test-with-coverage
-              if: ${{ inputs.use-sonarcloud == true }}
-              run: |
-                  dotnet tool install --global dotnet-coverage
-                  dotnet-coverage collect --output-format xml --output "coverage.xml" "dotnet test --no-build --configuration Release --logger trx --results-directory testresults"
-              shell: pwsh
+    - name: 🧪 Test .NET with coverage
+      id: test-with-coverage
+      if: ${{ inputs.use-sonarcloud == true }}
+      run: |
+        dotnet tool install --global dotnet-coverage
+        dotnet-coverage collect --output-format xml --output "coverage.xml" "dotnet test --no-build --configuration Release --logger trx --results-directory testresults"
+      shell: pwsh
 
-            - name: Stop SonarQube Analysis
-              if: ${{ inputs.use-sonarcloud == true && (success() || steps.test-with-coverage.conclusion == 'failure') }}
-              id: sonar
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-                  SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-              run: |
-                  dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
+    - name: Stop SonarQube Analysis
+      # Only run SonarCloud analysis only for the original repository and not for forks (either on push or PR from the same repo)
+      if: ${{ inputs.use-sonarcloud == true &&
+          ( success() || steps.test-with-coverage.conclusion == 'failure' ) &&
+          ( github.repository == 'microcks/microcks-testcontainers-dotnet' ) &&
+          ( github.event_name != 'pull_request' || ( github.event.pull_request.head.repo.full_name == github.repository ) ) }}
+      id: sonar
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+      run: |
+        dotnet-sonarscanner end /d:sonar.token="${{ secrets.SONAR_TOKEN }}"
 
-            - name: 📤 Upload Test And Coverage Results
-              uses: actions/upload-artifact@v4
-              if: always() # run this step even if previous step failed
-              with:
-                  name: ${{ inputs.runs-on }}
-                  path: testresults
+    - name: 📤 Upload Test And Coverage Results
+      uses: actions/upload-artifact@v4
+      if: always() # run this step even if previous step failed
+      with:
+        name: ${{ inputs.runs-on }}
+        path: testresults
 
-            - name: 📦 Nuget Pack
-              if: ${{ inputs.publish-package }}
-              run: |
-                  dotnet pack `
-                  --include-source `
-                  --configuration Release `
-                  --no-build `
-                  --no-restore `
-                  --output ${{ github.workspace }}/nugets/ `
-                  -p:PackageVersion="${{ inputs.version }}"
-              shell: pwsh
+    - name: 📦 Nuget Pack
+      if: ${{ inputs.publish-package }}
+      run: |
+        dotnet pack `
+        --include-source `
+        --configuration Release `
+        --no-build `
+        --no-restore `
+        --output ${{ github.workspace }}/nugets/ `
+        -p:PackageVersion="${{ inputs.version }}"
+      shell: pwsh
 
-            - name: 📤 Upload Nuget Package
-              uses: actions/upload-artifact@v4
-              if: ${{ inputs.publish-package }}
-              with:
-                  if-no-files-found: error
-                  name: nugets_${{ inputs.runs-on }}
-                  path: nugets
+    - name: 📤 Upload Nuget Package
+      uses: actions/upload-artifact@v4
+      if: ${{ inputs.publish-package }}
+      with:
+        if-no-files-found: error
+        name: nugets_${{ inputs.runs-on }}
+        path: nugets
+
