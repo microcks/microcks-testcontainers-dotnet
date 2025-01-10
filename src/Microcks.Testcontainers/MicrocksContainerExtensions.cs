@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0 
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -20,10 +20,12 @@ using System.IO;
 using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 
 namespace Microcks.Testcontainers;
 
@@ -98,11 +100,11 @@ public static class MicrocksContainerExtensions
 
     private static async Task WaitForConditionAsync(Func<Task<bool>> condition, TimeSpan atMost, TimeSpan delay, TimeSpan interval)
     {
+        // Delay before first check
+        await Task.Delay(delay);
+
         // Cancel after atMost
         using var cancellationTokenSource = new CancellationTokenSource(atMost);
-
-        // Delay before first check
-        await Task.Delay(delay, cancellationTokenSource.Token);
 
         // Polling
         while (!await condition())
@@ -111,7 +113,7 @@ public static class MicrocksContainerExtensions
             {
                 throw new TaskCanceledException();
             }
-            await Task.Delay(interval, cancellationTokenSource.Token);
+            await Task.Delay(interval, CancellationToken.None);
         }
     }
 
@@ -175,5 +177,31 @@ public static class MicrocksContainerExtensions
             throw new Exception("Artifact has not been correctly downloaded");
         }
         container.Logger.LogInformation($"Artifact {remoteArtifactUrl} has been downloaded");
+    }
+
+    /// <summary>
+    /// Retrieve event messages received during a test on an endpoint (for further investigation or checks).
+    /// </summary>
+    /// <param name="container">Microcks container</param>
+    /// <param name="testResult">The test result to retrieve events from</param>
+    /// <param name="operationName">The name of the operation to retrieve events to test result</param>
+    /// <returns>List of UnidirectionalEvent</returns>
+    /// <exception cref="MicrocksException">If events have not been correctly retrieved</exception>
+    public static async Task<List<UnidirectionalEvent>> GetEventMessagesForTestCaseAsync(this MicrocksContainer container,
+        TestResult testResult, string operationName)
+    {
+        var operation = operationName.Replace('/', '!');
+        var testCaseId = $"{testResult.Id}-{testResult.TestNumber}-{HttpUtility.UrlEncode(operation)}";
+        var url = $"{container.GetHttpEndpoint()}api/tests/{testResult.Id}/events/{testCaseId}";
+        var response = await Client.GetAsync(url);
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            return await response.Content.ReadFromJsonAsync<List<UnidirectionalEvent>>();
+        }
+        else
+        {
+            throw new MicrocksException($"Couldn't retrieve events for test case {operationName} on test {testResult.Id}");
+        }
     }
 }

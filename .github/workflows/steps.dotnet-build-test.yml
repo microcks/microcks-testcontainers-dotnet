@@ -55,13 +55,16 @@ jobs:
       run: dotnet tool install --global dotnet-sonarscanner
 
     - name: 🔧 Restore .NET Tools
-      run: dotnet tool restore  
-      
+      run: dotnet tool restore
+
     - name: 🔧 Restore dependencies
       run: dotnet restore
 
     - name: 🔍 Start SonarQube Analysis
-      if: ${{ inputs.use-sonarcloud == true }}
+      # Only run SonarCloud analysis only for the original repository and not for forks (either on push or PR from the same repo)
+      if: ${{ inputs.use-sonarcloud == true &&
+          ( github.repository == 'microcks/microcks-testcontainers-dotnet') &&
+          ( github.event_name != 'pull_request' || ( github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]') ) }}
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -99,7 +102,11 @@ jobs:
       shell: pwsh
 
     - name: Stop SonarQube Analysis
-      if: ${{ inputs.use-sonarcloud == true && (success() || steps.test-with-coverage.conclusion == 'failure') }}
+      # Only run SonarCloud analysis only for the original repository and not for forks (either on push or PR from the same repo)
+      if: ${{ inputs.use-sonarcloud == true &&
+          ( success() || steps.test-with-coverage.conclusion == 'failure' ) &&
+          ( github.repository == 'microcks/microcks-testcontainers-dotnet' ) &&
+          ( github.event_name != 'pull_request' || ( github.event.pull_request.head.repo.full_name == github.repository ) ) }}
       id: sonar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0 
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -85,7 +85,8 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
 
         if (_mainRemoteArtifacts != null && _mainRemoteArtifacts.Any())
         {
-            _mainRemoteArtifacts.ForEach(remoteArtifactUrl => container.DownloadArtifactAsync(remoteArtifactUrl, main: true).GetAwaiter().GetResult());
+            _mainRemoteArtifacts.ForEach(remoteArtifactUrl =>
+                container.DownloadArtifactAsync(remoteArtifactUrl, main: true).GetAwaiter().GetResult());
         }
 
         if (_mainArtifacts != null && _mainArtifacts.Any())
@@ -148,6 +149,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         {
             _snapshots.AddRange(snapshots);
         }
+
         return this;
     }
 
@@ -166,6 +168,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         {
             _mainRemoteArtifacts.AddRange(urls);
         }
+
         return this;
     }
 
@@ -184,6 +187,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         {
             _mainArtifacts.AddRange(mainArtifacts);
         }
+
         return this;
     }
 
@@ -202,6 +206,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         {
             _secondaryArtifacts.AddRange(secondaryArtifacts);
         }
+
         return this;
     }
 
@@ -220,6 +225,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         {
             _secrets.AddRange(secrets);
         }
+
         return this;
     }
 }
