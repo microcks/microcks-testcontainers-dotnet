@@ -43,6 +43,9 @@ public class MicrocksContainerEnsemble : IAsyncDisposable
 
     private readonly INetwork _network;
 
+    public INetwork Network { get => this._network; }
+
+
     private readonly string _microcksImage;
 
     /// <summary>

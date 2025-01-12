@@ -41,14 +41,39 @@ public sealed class MicrocksAsyncMinionContainer : DockerContainer
     /// <returns>A formatted Kafka mock topic name.</returns>
     public string GetKafkaMockTopic(string service, string version, string operationName)
     {
-        // operationName may start with SUBSCRIBE or PUBLISH.
-        if (operationName.Contains(' '))
-        {
-            operationName = operationName.Split(' ')[1];
-        }
+        operationName = ExtractOperationName(operationName);
+
         return String.Format(DestinationPattern,
             service.Replace(" ", "").Replace("-", ""),
             version,
             operationName.Replace("/", "-"));
+    }
+
+    /// <summary>
+    /// Returns the WebSocket mock endpoint based on the provided service, version, and operation name.
+    /// </summary>
+    /// <returns>The WebSocket mock endpoint.</returns>
+    public Uri GetWebSocketMockEndpoint(string service, string version, string operationName)
+    {
+        operationName = ExtractOperationName(operationName);
+        var port = this.GetMappedPublicPort(MicrocksAsyncMinionBuilder.MicrocksAsyncMinionHttpPort);
+        var escapedService = service.Replace(" ", "+");
+        var escapedVersion = version.Replace(" ", "+");
+
+        return new Uri($"ws://{this.Hostname}:{port}/api/ws/{escapedService}/{escapedVersion}/{operationName}");
+    }
+
+    /// <summary>
+    /// Extracts the operation name from the provided operation name.
+    /// </summary>
+    /// <param name="operationName">operationName may start with SUBSCRIBE or PUBLISH.</param>
+    /// <returns>The extracted operation name.</returns>
+    private string ExtractOperationName(string operationName)
+    {
+        if (operationName.Contains(' '))
+        {
+            operationName = operationName.Split(' ')[1];
+        }
+        return operationName;
     }
 }
