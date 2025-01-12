@@ -163,8 +163,7 @@ You can create and build an ensemble that way:
 
 ```csharp
 MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, MicrocksImage)
-    .WithMainArtifacts("pastry-orders-asyncapi.yml")
-    .WithKafkaConnection(new KafkaConnection($"kafka:19092"));
+    .WithMainArtifacts("pastry-orders-asyncapi.yml");
 
 ensemble.StartAsync();
 ```
@@ -176,15 +175,44 @@ You have to access it using:
 MicrocksContainer microcks = ensemble.MicrocksContainer;
 microcks.ImportAsMainArtifact(...);
 ```
+
+To activate async features (WebSocket), you can use `WithAsyncFeature()` method.
+
+```csharp
+MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, MicrocksImage)
+    .WithMainArtifacts("pastry-orders-asyncapi.yml")
+    .WithAsyncFeature();
+
+ensemble.StartAsync();
+```
+
+#### Asynchronous API support
+Asynchronous API feature needs to be explicitly enabled as well.
+In case you want to use it for mocking purposes,
+you'll have to specify additional connection details to the broker of your choice.
+
+To add a note indicating that it is not necessary to call `WithAsyncFeature()` when an additional method exists.
+
+See an example below with connection to a Kafka broker:
+
+```csharp
+MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, MicrocksImage)
+    .WithMainArtifacts("pastry-orders-asyncapi.yml")
+    .WithKafkaConnection(new KafkaConnection($"kafka:19092"));
+
+ensemble.StartAsync();
+```
+
 ##### Using mock endpoints for your dependencies
 
 Once started, the `ensemble.AsyncMinionContainer` provides methods for retrieving mock endpoint names for the different
-supported protocols (Kafka only at the moment).
+supported protocols (WebSocket, Kafka, etc. ...).
 
 ```csharp
 string kafkaTopic = ensemble.AsyncMinionContainer
     .GetKafkaMockTopic("Pastry orders API", "0.1.0", "SUBSCRIBE pastry/orders");
 ```
+
 ##### Launching new contract-tests
 
 Using contract-testing techniques on Asynchronous endpoints may require a different style of interacting with the Microcks
