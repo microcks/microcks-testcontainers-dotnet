@@ -75,7 +75,7 @@ public sealed class MicrocksAsyncMinionBuilder
             .WithNetwork(this._network)
             .WithNetworkAliases("microcks-async-minion")
             .WithEnvironment("MICROCKS_HOST_PORT", "microcks:" + MicrocksBuilder.MicrocksHttpPort)
-            .WithExposedPort(MicrocksAsyncMinionHttpPort)
+            .WithPortBinding(MicrocksAsyncMinionHttpPort, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Profile prod activated\\..*"));
     }
 
