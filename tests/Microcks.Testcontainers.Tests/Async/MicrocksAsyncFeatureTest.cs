@@ -22,7 +22,6 @@ using System.Text;
 using System.Threading;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
-using FluentAssertions;
 using Microcks.Testcontainers.Model;
 
 namespace Microcks.Testcontainers.Tests.Async;
@@ -84,9 +83,8 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
     [Fact]
     public void ShouldDetermineCorrectImageMessage()
     {
-        this._microcksContainerEnsemble.AsyncMinionContainer.Image.FullName
-            .Should()
-            .Be("quay.io/microcks/microcks-uber-async-minion:1.10.1");
+        Assert.Equal("quay.io/microcks/microcks-uber-async-minion:1.10.1",
+            this._microcksContainerEnsemble.AsyncMinionContainer.Image.FullName);
     }
 
     /// <summary>
@@ -116,7 +114,7 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
             "Test done",
             CancellationToken.None);
 
-        message.Should().Be(expectedMessage);
+        Assert.Equal(expectedMessage, message);
     }
 
     /// <summary>
@@ -140,13 +138,13 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
         var testResult = await taskTestResult;
 
         // Assert
-        testResult.InProgress.Should().Be(false);
-        testResult.Success.Should().Be(false);
-        testResult.TestedEndpoint.Should().Be(testRequest.TestEndpoint);
+        Assert.False(testResult.InProgress);
+        Assert.False(testResult.Success);
+        Assert.Equal(testRequest.TestEndpoint, testResult.TestedEndpoint);
 
-        testResult.TestCaseResults.First().TestStepResults.Should().NotBeEmpty();
+        Assert.NotEmpty(testResult.TestCaseResults.First().TestStepResults);
         var testStepResult = testResult.TestCaseResults.First().TestStepResults.First();
-        testStepResult.Message.Should().Contain("object has missing required properties ([\"status\"]");
+        Assert.Contains("object has missing required properties ([\"status\"]", testStepResult.Message);
     }
 
     /// <summary>
@@ -170,11 +168,11 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
         var testResult = await taskTestResult;
 
         // Assert
-        testResult.InProgress.Should().Be(false);
-        testResult.Success.Should().Be(true);
-        testResult.TestedEndpoint.Should().Be(testRequest.TestEndpoint);
+        Assert.False(testResult.InProgress);
+        Assert.True(testResult.Success);
+        Assert.Equal(testRequest.TestEndpoint, testResult.TestedEndpoint);
 
-        testResult.TestCaseResults.First().TestStepResults.Should().NotBeEmpty();
-        testResult.TestCaseResults.First().TestStepResults.First().Message.Should().BeNullOrEmpty();
+        Assert.NotEmpty(testResult.TestCaseResults.First().TestStepResults);
+        Assert.True(string.IsNullOrEmpty(testResult.TestCaseResults.First().TestStepResults.First().Message));
     }
 }

@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0 
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,6 @@
 //
 //
 
-using FluentAssertions;
 using NHamcrest;
 using NHamcrest.Core;
 using RestAssured.Logging;
@@ -50,16 +49,16 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
     public void ShouldConfigureMockEndpoints()
     {
         string baseWsUrl = $"{_microcksContainer.GetSoapMockEndpoint("Pastries Service", "1.0")}";
-        baseWsUrl.Should().Be($"{_microcksContainer.GetHttpEndpoint()}soap/Pastries Service/1.0");
+        Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}soap/Pastries Service/1.0", baseWsUrl);
 
         string baseApiUrl = $"{_microcksContainer.GetRestMockEndpoint("API Pastries", "0.0.1")}";
-        baseApiUrl.Should().Be($"{_microcksContainer.GetHttpEndpoint()}rest/API Pastries/0.0.1");
+        Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}rest/API Pastries/0.0.1", baseApiUrl);
 
         string baseGraphUrl = $"{_microcksContainer.GetGraphQLMockEndpoint("Pastries Graph", "1")}";
-        baseGraphUrl.Should().Be($"{_microcksContainer.GetHttpEndpoint()}graphql/Pastries Graph/1");
+        Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}graphql/Pastries Graph/1", baseGraphUrl);
 
         string baseGrpcUrl = $"{_microcksContainer.GetGrpcMockEndpoint()}";
-        baseGrpcUrl.Should().Be($"grpc://{_microcksContainer.Hostname}:{_microcksContainer.GetMappedPublicPort(MicrocksBuilder.MicrocksGrpcPort)}/");
+        Assert.Equal($"grpc://{_microcksContainer.Hostname}:{_microcksContainer.GetMappedPublicPort(MicrocksBuilder.MicrocksGrpcPort)}/", baseGrpcUrl);
     }
 
     [Fact]
@@ -98,8 +97,7 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
           .Response().Content.ReadAsStringAsync();
 
         var document = JsonDocument.Parse(services);
-        document.RootElement.EnumerateArray().Should().HaveCount(7);
-
+        Assert.Equal(7, document.RootElement.GetArrayLength());
 
         verifiableResponse.Body("$[0:].name", Has.Items(
             Is.EqualTo("Petstore API"),
