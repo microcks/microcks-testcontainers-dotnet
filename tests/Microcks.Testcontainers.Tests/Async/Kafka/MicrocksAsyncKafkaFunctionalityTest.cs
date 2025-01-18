@@ -21,7 +21,6 @@ using System.Diagnostics;
 using System.Linq;
 using Confluent.Kafka;
 using DotNet.Testcontainers.Builders;
-using FluentAssertions;
 using Microcks.Testcontainers.Connection;
 using Microcks.Testcontainers.Model;
 using Microsoft.Extensions.Logging;
@@ -103,7 +102,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
             message = consumeResult.Message.Value;
         }
 
-        message.Should().Be(expectedMessage);
+        Assert.Equal(expectedMessage, message);
     }
 
 
@@ -164,17 +163,17 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
         var testResult = await taskTestResult;
 
         // Assert
-        testResult.InProgress.Should().Be(false);
-        testResult.Success.Should().Be(true);
-        testResult.TestedEndpoint.Should().Be(testRequest.TestEndpoint);
+        Assert.False(testResult.InProgress);
+        Assert.True(testResult.Success);
+        Assert.Equal(testRequest.TestEndpoint, testResult.TestedEndpoint);
 
         var testCaseResult = testResult.TestCaseResults.First();
         var testStepResults = testCaseResult.TestStepResults;
 
         // Minimum 1 message captured
-        testStepResults.Should().NotBeEmpty();
+        Assert.NotEmpty(testStepResults);
         // No error message
-        testStepResults.First().Message.Should().BeNull();
+        Assert.Null(testStepResults.First().Message);
     }
 
 
@@ -233,29 +232,30 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
         var testResult = await taskTestResult;
 
         // Assert
-        testResult.InProgress.Should().Be(false);
-        testResult.Success.Should().Be(false);
-        testResult.TestedEndpoint.Should().Be(testRequest.TestEndpoint);
+        Assert.False(testResult.InProgress);
+        Assert.False(testResult.Success);
+        Assert.Equal(testRequest.TestEndpoint, testResult.TestedEndpoint);
 
         var testCaseResult = testResult.TestCaseResults.First();
         var testStepResults = testCaseResult.TestStepResults;
 
         // Minimum 1 message captured
-        testStepResults.Should().NotBeEmpty();
+        Assert.NotEmpty(testStepResults);
         // Error message status is missing
-        testStepResults.First().Message.Should().Contain("object has missing required properties ([\"status\"]");
+        Assert.Contains("object has missing required properties ([\"status\"]", testStepResults.First().Message);
 
         // Retrieve event messages for the failing test case.
         var events = await _microcksContainerEnsemble.MicrocksContainer
             .GetEventMessagesForTestCaseAsync(testResult, "SUBSCRIBE pastry/orders");
         // We should have at least 4 events.
-        events.Count.Should().BeGreaterOrEqualTo(4);
+        Assert.True(events.Count >= 4);
 
-        events.Should().AllSatisfy(e =>
+        // Check that all events have the correct message.
+        Assert.All(events, e =>
         {
             // Check these are the correct message.
-            e.EventMessage.Should().NotBeNull();
-            e.EventMessage.Content.Should().Be(message);
+            Assert.NotNull(e.EventMessage);
+            Assert.Equal(message, e.EventMessage.Content);
         });
     }
 

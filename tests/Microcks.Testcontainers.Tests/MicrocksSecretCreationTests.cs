@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0 
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,7 +15,6 @@
 //
 //
 
-using FluentAssertions;
 using Microcks.Testcontainers;
 using NHamcrest;
 using System;
@@ -59,7 +58,7 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
           .Response().Content.ReadAsStringAsync();
 
         var document = JsonDocument.Parse(result);
-        document.RootElement.EnumerateArray().Should().HaveCount(1);
+        Assert.Equal(1, document.RootElement.GetArrayLength());
     }
 
     [Fact]
@@ -68,8 +67,9 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
         var secret = new SecretBuilder()
           .WithName("my-secret")
           .Build();
-        secret.Should().NotBeNull();
-        secret.Name.Should().Be("my-secret");
+
+        Assert.NotNull(secret);
+        Assert.Equal("my-secret", secret.Name);
     }
 
     [Fact]

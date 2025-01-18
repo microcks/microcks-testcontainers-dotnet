@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0 
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,7 +18,6 @@
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using DotNet.Testcontainers.Networks;
-using FluentAssertions;
 using Microcks.Testcontainers;
 using Microcks.Testcontainers.Model;
 using System;
@@ -109,10 +108,10 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
 
         // First test should fail with validation failure messages.
         TestResult badTestResult = await _microcksContainer.TestEndpointAsync(badTestRequest);
-        badTestResult.Success.Should().BeFalse();
-        badTestResult.TestedEndpoint.Should().Be("http://bad-impl:3001");
-        badTestResult.TestCaseResults.Should().HaveCount(3);
-        badTestResult.TestCaseResults[0].TestStepResults[0].Message.Should().Contain("object has missing required properties");
+        Assert.False(badTestResult.Success);
+        Assert.Equal("http://bad-impl:3001", badTestResult.TestedEndpoint);
+        Assert.Equal(3, badTestResult.TestCaseResults.Count);
+        Assert.Contains("object has missing required properties", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
 
         // Switch endpoint to good implementation
         var goodTestRequest = new TestRequest
@@ -123,10 +122,10 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
             Timeout = TimeSpan.FromMilliseconds(2000)
         };
         TestResult goodTestResult = await _microcksContainer.TestEndpointAsync(goodTestRequest);
-        goodTestResult.Success.Should().BeTrue();
-        goodTestResult.TestedEndpoint.Should().Be("http://good-impl:3002");
-        goodTestResult.TestCaseResults.Should().HaveCount(3);
-        goodTestResult.TestCaseResults[0].TestStepResults[0].Message.Should().BeEmpty();
+        Assert.True(goodTestResult.Success);
+        Assert.Equal("http://good-impl:3002", goodTestResult.TestedEndpoint);
+        Assert.Equal(3, goodTestResult.TestCaseResults.Count);
+        Assert.Empty(goodTestResult.TestCaseResults[0].TestStepResults[0].Message);
 
         // Test avec un header
         var goodTestRequestWithHeader = new TestRequest
@@ -151,15 +150,22 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
         };
 
         TestResult goodTestResultWithHeader = await _microcksContainer.TestEndpointAsync(goodTestRequestWithHeader);
-        goodTestResultWithHeader.Success.Should().BeTrue();
-        goodTestResultWithHeader.TestedEndpoint.Should().Be("http://good-impl:3002");
-        goodTestResultWithHeader.TestCaseResults.Should().HaveCount(3);
-        goodTestResultWithHeader.TestCaseResults[0].TestStepResults[0].Message.Should().BeEmpty();
-        goodTestResultWithHeader.OperationsHeaders.Should().HaveCount(1);
-        goodTestResultWithHeader.OperationsHeaders.Should().ContainKey("GET /pastries");
-        goodTestResultWithHeader.OperationsHeaders["GET /pastries"].Should().HaveCount(1);
+        Assert.True(goodTestResultWithHeader.Success);
+        Assert.Equal("http://good-impl:3002", goodTestResultWithHeader.TestedEndpoint);
+        Assert.Equal(3, goodTestResultWithHeader.TestCaseResults.Count);
+        Assert.Empty(goodTestResultWithHeader.TestCaseResults[0].TestStepResults[0].Message);
+        Assert.Single(goodTestResultWithHeader.OperationsHeaders);
+        Assert.True(goodTestResultWithHeader.OperationsHeaders.ContainsKey("GET /pastries"));
+        Assert.Single(goodTestResultWithHeader.OperationsHeaders["GET /pastries"]);
         var header = goodTestResultWithHeader.OperationsHeaders["GET /pastries"][0];
-        header.Name.Should().Be("X-Custom-Header-1");
-        header.Values.Split(",").Should().BeEquivalentTo(["value1", "value2", "value3"]);
+        Assert.Equal("X-Custom-Header-1", header.Name);
+
+        var actualItems = header.Values.Split(",");
+        var expectedItems = new[] { "value1", "value2", "value3" };
+
+        foreach (var expectedItem in expectedItems)
+        {
+            Assert.Contains(expectedItem, actualItems);
+        }
     }
 }
