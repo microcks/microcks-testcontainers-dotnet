@@ -48,72 +48,71 @@ public class OAuth2ClientContext
     public string RefreshToken { get; set; }
 
     [JsonPropertyName("grantType")]
-    public OAuth2GrantType GrantType { get; set; }
+    public OAuth2GrantType GrantType { get; set; }    
+}
 
+/// <summary>
+/// A Builder to create OAuth2ClientContext using a fluid APi.
+/// </summary>
+public class OAuth2ClientContextBuilder
+{
+    private readonly OAuth2ClientContext _context;
 
-    /// <summary>
-    /// A Builder to create OAuth2ClientContext using a fluid APi.
-    /// </summary>
-    public class OAuth2ClientContextBuilder
+    public OAuth2ClientContextBuilder()
     {
-        private readonly OAuth2ClientContext _context;
+        _context = new OAuth2ClientContext();
+    }
 
-        public OAuth2ClientContextBuilder()
-        {
-            _context = new OAuth2ClientContext();
-        }
+    public OAuth2ClientContextBuilder WithClientId(string clientId)
+    {
+        _context.ClientId = clientId;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithClientId(string clientId)
-        {
-            _context.ClientId = clientId;
-            return this;
-        }
+    public OAuth2ClientContextBuilder WithClientSecret(string clientSecret)
+    {
+        _context.ClientSecret = clientSecret;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithClientSecret(string clientSecret)
-        {
-            _context.ClientSecret = clientSecret;
-            return this;
-        }
+    public OAuth2ClientContextBuilder WithTokenUri(string tokenUri)
+    {
+        _context.TokenUri = tokenUri;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithTokenUri(string tokenUri)
-        {
-            _context.TokenUri = tokenUri;
-            return this;
-        }
+    public OAuth2ClientContextBuilder WithScopes(string scopes)
+    {
+        _context.Scopes = scopes;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithScopes(string scopes)
-        {
-            _context.Scopes = scopes;
-            return this;
-        }
+    public OAuth2ClientContextBuilder WithUsername(string username)
+    {
+        _context.Username = username;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithUsername(string username)
-        {
-            _context.Username = username;
-            return this;
-        }
+    public OAuth2ClientContextBuilder WithPassword(string password)
+    {
+        _context.Password = password;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithPassword(string password)
-        {
-            _context.Password = password;
-            return this;
-        }
+    public OAuth2ClientContextBuilder WithRefreshToken(string refreshToken)
+    {
+        _context.RefreshToken = refreshToken;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithRefreshToken(string refreshToken)
-        {
-            _context.RefreshToken = refreshToken;
-            return this;
-        }
+    public OAuth2ClientContextBuilder WithGrantType(OAuth2GrantType grantType)
+    {
+        _context.GrantType = grantType;
+        return this;
+    }
 
-        public OAuth2ClientContextBuilder WithGrantType(OAuth2GrantType grantType)
-        {
-            _context.GrantType = grantType;
-            return this;
-        }
-
-        public OAuth2ClientContext Build()
-        {
-            return _context;
-        }
+    public OAuth2ClientContext Build()
+    {
+        return _context;
     }
 }

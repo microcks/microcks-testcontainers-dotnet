@@ -21,7 +21,6 @@ using DotNet.Testcontainers.Networks;
 using Microcks.Testcontainers;
 using Microcks.Testcontainers.Model;
 using System;
-using System.Collections.Generic;
 using System.Net;
 using Testcontainers.Keycloak;
 
@@ -105,7 +104,7 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
             RunnerType = TestRunnerType.OPEN_API_SCHEMA,
             TestEndpoint = "http://good-impl:3002",
             Timeout = TimeSpan.FromMilliseconds(2000),
-            oAuth2Context = new OAuth2ClientContext.OAuth2ClientContextBuilder()
+            oAuth2Context = new OAuth2ClientContextBuilder()
               .WithClientId("myrealm-serviceaccount")
               .WithClientSecret("ab54d329-e435-41ae-a900-ec6b3fe15c54")
               .WithTokenUri("http://keycloak:8080/realms/myrealm/protocol/openid-connect/token")
