@@ -64,4 +64,7 @@ public class TestResult
 
     [JsonPropertyName("operationsHeaders")]
     public Dictionary<string, List<Header>> OperationsHeaders { get; set; }
+
+    [JsonPropertyName("authorizedClient")]
+    public OAuth2AuthorizedClient AuthorizedClient { get; set; }
 }
