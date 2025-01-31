@@ -74,6 +74,7 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
           (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
 
         return Task.WhenAll(
+          _network.CreateAsync(),
           _microcksContainer.StartAsync(),
           _badImpl.StartAsync(),
           _goodImpl.StartAsync()
