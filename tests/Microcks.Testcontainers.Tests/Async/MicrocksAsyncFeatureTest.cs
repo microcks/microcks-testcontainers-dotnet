@@ -16,6 +16,7 @@
 //
 
 using System;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
@@ -123,21 +124,25 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
     [Fact]
     public async Task ShouldReturnsCorrectStatusContractWhenBadMessageIsEmitted()
     {
+        var stopwatch = new Stopwatch();
         // New Test request
         var testRequest = new TestRequest
         {
             ServiceId = "Pastry orders API:0.1.0",
             RunnerType = TestRunnerType.ASYNC_API_SCHEMA,
-            Timeout = TimeSpan.FromMilliseconds(70000),
+            Timeout = TimeSpan.FromMilliseconds(70001),
             TestEndpoint = "ws://bad-impl:4001/websocket",
         };
 
         var taskTestResult = _microcksContainerEnsemble.MicrocksContainer
             .TestEndpointAsync(testRequest);
+        stopwatch.Start();
 
         var testResult = await taskTestResult;
+        stopwatch.Stop();
 
         // Assert
+        Assert.True(stopwatch.ElapsedMilliseconds > 70000);
         Assert.False(testResult.InProgress);
         Assert.False(testResult.Success);
         Assert.Equal(testRequest.TestEndpoint, testResult.TestedEndpoint);

@@ -73,6 +73,7 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
           (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
 
         return Task.WhenAll(
+          _network.CreateAsync(),
           _microcksContainer.StartAsync(),
           _keycloak.StartAsync(),
           _goodImpl.StartAsync()
