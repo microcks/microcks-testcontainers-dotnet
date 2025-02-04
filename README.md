@@ -11,9 +11,9 @@
 
 ## Build Status
 
-Latest released version is `0.1.0`.
+Latest released version is `0.2.0`.
 
-Current development version is `0.2.0`.
+Current development version is `0.3.0`.
 
 #### Sonarcloud Quality metrics
 
@@ -49,7 +49,7 @@ To get involved with our community, please make sure you are familiar with the p
 ### Include it into your project dependencies
 
 ```
-dotnet add package Microcks.Testcontainers --version 0.1.0
+dotnet add package Microcks.Testcontainers --version 0.2.0
 ```
 
 ### Startup the container
@@ -59,7 +59,7 @@ You just have to specify the container image you'd like to use. This library req
 
 ```csharp
 MicrocksContainer container = new MicrocksBuilder()
-	.WithImage("quay.io/microcks/microcks-uber:1.10.0")
+	.WithImage("quay.io/microcks/microcks-uber:1.11.0")
 	.Build();
 await container.StartAsync();
 ```
