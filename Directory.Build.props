@@ -2,7 +2,7 @@
 <Project>
 	<PropertyGroup>
 		<PackageId>$(AssemblyName)</PackageId>
-		<VersionPrefix>0.30</VersionPrefix>
+		<VersionPrefix>0.3.0</VersionPrefix>
 		<VersionSuffix>alpha</VersionSuffix>
 
 		<Description>Microcks.Testcontainers for .NET</Description>
