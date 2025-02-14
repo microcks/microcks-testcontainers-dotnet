@@ -23,7 +23,7 @@ using System.Text.Json;
 using Microcks.Testcontainers.Model;
 using RestAssured.Logging;
 
-namespace Testcontainers.Microcks.Tests;
+namespace Microcks.Testcontainers.Tests;
 
 public sealed class MicrocksSecretCreationTests : IAsyncLifetime
 {
