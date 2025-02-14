@@ -24,7 +24,7 @@ using System;
 using System.Net;
 using Testcontainers.Keycloak;
 
-namespace Testcontainers.Microcks.Tests;
+namespace Microcks.Testcontainers.Tests;
 
 public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsyncLifetime
 {
