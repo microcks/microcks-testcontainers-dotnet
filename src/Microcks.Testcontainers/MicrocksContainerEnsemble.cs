@@ -113,6 +113,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable
         }
 
         this._asyncMinionBuilder = new MicrocksAsyncMinionBuilder(this._network)
+            .WithEnvironment(MacOSM4Helper.GetJavaOptions())
             .WithImage(image);
 
         return this;

@@ -98,7 +98,7 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
         // Get the WebSocket endpoint for the "Pastry orders API" with version "0.1.0" and subscription "SUBSCRIBE pastry/orders".
         var webSocketEndpoint = _microcksContainerEnsemble
             .AsyncMinionContainer
-            .GetWebSocketMockEndpoint("Pastry orders API" ,"0.1.0", "SUBSCRIBE pastry/orders");
+            .GetWebSocketMockEndpoint("Pastry orders API", "0.1.0", "SUBSCRIBE pastry/orders");
         const string expectedMessage = "{\"id\":\"4dab240d-7847-4e25-8ef3-1530687650c8\",\"customerId\":\"fe1088b3-9f30-4dc1-a93d-7b74f0a072b9\",\"status\":\"VALIDATED\",\"productQuantities\":[{\"quantity\":2,\"pastryName\":\"Croissant\"},{\"quantity\":1,\"pastryName\":\"Millefeuille\"}]}";
 
         using var webSocketClient = new ClientWebSocket();
