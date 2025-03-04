@@ -111,6 +111,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     {
         return base.Init()
             .WithImage(MicrocksImage)
+            .WithEnvironment(MacOSM4Helper.GetJavaOptions())
             .WithPortBinding(MicrocksHttpPort, true)
             .WithPortBinding(MicrocksGrpcPort, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Started MicrocksApplication.*"));
