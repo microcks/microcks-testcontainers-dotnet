@@ -48,12 +48,14 @@ public static class MicrocksContainerExtensions
     });
 
     /// <summary>
-    /// Test an endpoint with a TestRequest.
+    /// Tests an endpoint with a given TestRequest by sending the request to the Microcks container
+    /// and polling for the test result until the test is completed or the timeout is reached.
     /// </summary>
-    /// <param name="container"></param>
-    /// <param name="testRequest"></param>
-    /// <returns></returns>
-    /// <exception cref="Exception"></exception>
+    /// <param name="container">The Microcks container to test against.</param>
+    /// <param name="testRequest">The TestRequest containing the details of the test to be performed.</param>
+    /// <returns>A Task representing the asynchronous operation, with a TestResult as the result.</returns>
+    /// <exception cref="Exception">Thrown if the test could not be launched
+    /// or if there was an error during the test execution.</exception>
     public static async Task<TestResult> TestEndpointAsync(
         this MicrocksContainer container, TestRequest testRequest)
     {
@@ -75,11 +77,12 @@ public static class MicrocksContainerExtensions
                     atMost: TimeSpan.FromMilliseconds(1000).Add(testRequest.Timeout),
                     delay: TimeSpan.FromMilliseconds(100),
                     interval: TimeSpan.FromMilliseconds(200));
-
             }
-            catch (TaskCanceledException)
+            catch (TaskCanceledException taskCanceledException)
             {
-                container.Logger.LogWarning("Test timeout reached, stopping polling");
+                container.Logger.LogWarning(
+                    taskCanceledException,
+                    "Test timeout reached, stopping polling for test {testEndpoint}", testRequest.TestEndpoint);
             }
 
             return await RefreshTestResultAsync(httpEndpoint, testResultId);

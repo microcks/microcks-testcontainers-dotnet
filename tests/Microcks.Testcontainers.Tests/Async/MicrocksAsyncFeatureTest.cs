@@ -21,9 +21,11 @@ using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
+using DotNet.Testcontainers;
 using DotNet.Testcontainers.Builders;
 using DotNet.Testcontainers.Containers;
 using Microcks.Testcontainers.Model;
+using Microsoft.Extensions.Logging;
 
 namespace Microcks.Testcontainers.Tests.Async;
 
@@ -50,6 +52,8 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
 
     public async Task InitializeAsync()
     {
+        ConsoleLogger.Instance.DebugLogLevelEnabled = true;
+
         this._microcksContainerEnsemble = new MicrocksContainerEnsemble(MicrocksImage)
             .WithMainArtifacts("pastry-orders-asyncapi.yml")
             .WithAsyncFeature();
@@ -98,7 +102,7 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
         // Get the WebSocket endpoint for the "Pastry orders API" with version "0.1.0" and subscription "SUBSCRIBE pastry/orders".
         var webSocketEndpoint = _microcksContainerEnsemble
             .AsyncMinionContainer
-            .GetWebSocketMockEndpoint("Pastry orders API" ,"0.1.0", "SUBSCRIBE pastry/orders");
+            .GetWebSocketMockEndpoint("Pastry orders API", "0.1.0", "SUBSCRIBE pastry/orders");
         const string expectedMessage = "{\"id\":\"4dab240d-7847-4e25-8ef3-1530687650c8\",\"customerId\":\"fe1088b3-9f30-4dc1-a93d-7b74f0a072b9\",\"status\":\"VALIDATED\",\"productQuantities\":[{\"quantity\":2,\"pastryName\":\"Croissant\"},{\"quantity\":1,\"pastryName\":\"Millefeuille\"}]}";
 
         using var webSocketClient = new ClientWebSocket();
@@ -130,26 +134,38 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
         {
             ServiceId = "Pastry orders API:0.1.0",
             RunnerType = TestRunnerType.ASYNC_API_SCHEMA,
-            Timeout = TimeSpan.FromMilliseconds(70001),
+            Timeout = TimeSpan.FromMilliseconds(7000),
             TestEndpoint = "ws://bad-impl:4001/websocket",
         };
 
         var taskTestResult = _microcksContainerEnsemble.MicrocksContainer
             .TestEndpointAsync(testRequest);
-        stopwatch.Start();
 
+        stopwatch.Start();
         var testResult = await taskTestResult;
         stopwatch.Stop();
 
+        // Add logging to trace the test result
+        var logger = _microcksContainerEnsemble
+                        .MicrocksContainer
+                        .Logger;
+
+        logger.LogDebug("Test Result: Success={Success}, InProgress={InProgress}, TestedEndpoint={TestedEndpoint}",
+            testResult.Success, testResult.InProgress, testResult.TestedEndpoint);
+
         // Assert
-        Assert.True(stopwatch.ElapsedMilliseconds > 70000);
-        Assert.False(testResult.InProgress);
-        Assert.False(testResult.Success);
+        Assert.False(testResult.InProgress, "Test should not be in progress");
+        Assert.True(stopwatch.ElapsedMilliseconds > 7000, "Test should have been stopped by timeout");
+        Assert.False(testResult.Success, "Test result should not be successful");
         Assert.Equal(testRequest.TestEndpoint, testResult.TestedEndpoint);
 
         Assert.NotEmpty(testResult.TestCaseResults.First().TestStepResults);
-        var testStepResult = testResult.TestCaseResults.First().TestStepResults.First();
+        var testStepResult = testResult.TestCaseResults
+            .First()
+            .TestStepResults
+            .First();
         Assert.Contains("object has missing required properties ([\"status\"]", testStepResult.Message);
+
     }
 
     /// <summary>
