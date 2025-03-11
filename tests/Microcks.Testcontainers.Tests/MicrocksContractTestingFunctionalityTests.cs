@@ -112,7 +112,7 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
         Assert.False(badTestResult.Success);
         Assert.Equal("http://bad-impl:3001", badTestResult.TestedEndpoint);
         Assert.Equal(3, badTestResult.TestCaseResults.Count);
-        Assert.Contains("object has missing required properties", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
+        Assert.Contains("string found, number expected", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
 
         // Switch endpoint to good implementation
         var goodTestRequest = new TestRequest
