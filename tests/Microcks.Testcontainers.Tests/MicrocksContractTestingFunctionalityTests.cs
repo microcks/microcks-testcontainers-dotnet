@@ -24,7 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 
-namespace Testcontainers.Microcks.Tests;
+namespace Microcks.Testcontainers.Tests;
 
 public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
 {
