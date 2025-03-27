@@ -48,7 +48,7 @@ public class OAuth2ClientContext
     public string RefreshToken { get; set; }
 
     [JsonPropertyName("grantType")]
-    public OAuth2GrantType GrantType { get; set; }    
+    public OAuth2GrantType GrantType { get; set; }
 }
 
 /// <summary>
