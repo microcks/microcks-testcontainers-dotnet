@@ -24,7 +24,7 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 
-namespace Testcontainers.Microcks.Tests;
+namespace Microcks.Testcontainers.Tests;
 
 public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
 {
@@ -74,6 +74,7 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
           (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
 
         return Task.WhenAll(
+          _network.CreateAsync(),
           _microcksContainer.StartAsync(),
           _badImpl.StartAsync(),
           _goodImpl.StartAsync()
@@ -111,7 +112,7 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
         Assert.False(badTestResult.Success);
         Assert.Equal("http://bad-impl:3001", badTestResult.TestedEndpoint);
         Assert.Equal(3, badTestResult.TestCaseResults.Count);
-        Assert.Contains("object has missing required properties", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
+        Assert.Contains("string found, number expected", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
 
         // Switch endpoint to good implementation
         var goodTestRequest = new TestRequest

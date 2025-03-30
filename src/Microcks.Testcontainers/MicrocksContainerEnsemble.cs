@@ -18,6 +18,7 @@
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Networks;
 using Microcks.Testcontainers.Connection;
+using Microcks.Testcontainers.Helpers;
 
 namespace Microcks.Testcontainers;
 
@@ -73,6 +74,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable
             .WithExposedPort(MicrocksBuilder.MicrocksHttpPort)
             .WithExposedPort(MicrocksBuilder.MicrocksGrpcPort)
             .WithImage(this._microcksImage)
+            .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithEnvironment("TEST_CALLBACK_URL", "http://microcks:" + MicrocksBuilder.MicrocksHttpPort)
             .WithEnvironment("ASYNC_MINION_URL", "http://microcks-async-minion:" + MicrocksAsyncMinionBuilder.MicrocksAsyncMinionHttpPort);
     }
@@ -113,6 +115,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable
         }
 
         this._asyncMinionBuilder = new MicrocksAsyncMinionBuilder(this._network)
+            .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithImage(image);
 
         return this;

@@ -15,6 +15,8 @@
 //
 //
 
+using Microcks.Testcontainers.Helpers;
+
 namespace Microcks.Testcontainers;
 
 /// <inheritdoc cref="ContainerBuilder{TBuilderEntity, TContainerEntity, TConfigurationEntity}" />
@@ -110,6 +112,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     protected override MicrocksBuilder Init()
     {
         return base.Init()
+            .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithImage(MicrocksImage)
             .WithPortBinding(MicrocksHttpPort, true)
             .WithPortBinding(MicrocksGrpcPort, true)
