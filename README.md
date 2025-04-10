@@ -59,8 +59,8 @@ You just have to specify the container image you'd like to use. This library req
 
 ```csharp
 MicrocksContainer container = new MicrocksBuilder()
-	.WithImage("quay.io/microcks/microcks-uber:1.11.0")
-	.Build();
+    .WithImage("quay.io/microcks/microcks-uber:1.11.0")
+    .Build();
 await container.StartAsync();
 ```
 
@@ -73,9 +73,9 @@ You can do it before starting the container using simple paths:
 
 ```csharp
 MicrocksContainer container = new MicrocksBuilder()
-	  .WithMainArtifacts("apipastries-openapi.yaml")
-	  .WithSecondaryArtifacts("apipastries-postman-collection.json")
-	  .Build();
+    .WithMainArtifacts("apipastries-openapi.yaml")
+    .WithSecondaryArtifacts("apipastries-postman-collection.json")
+    .Build();
 await container.StartAsync();
 ```
 
@@ -90,8 +90,8 @@ You can also import full [repository snapshots](https://microcks.io/documentatio
 
 ```csharp
 MicrocksContainer container = new MicrocksBuilder()
-      .WithSnapshots("microcks-repository.json")
-	  .Build();
+    .WithSnapshots("microcks-repository.json")
+    .Build();
 await container.StartAsync();
 ```
 
@@ -119,8 +119,8 @@ private int port;
 public async Task InitializeAsync()
 {
 	container = new MicrocksBuilder()
-		.WithExposedPort(port)
-		.Build();
+        .WithExposedPort(port)
+        .Build();
 	await container.StartAsync();
 }
 
@@ -141,6 +141,67 @@ public async Task testOpenAPIContract()
 ```
 
 The `TestResult` gives you access to all details regarding success of failure on different test cases.
+
+**Important:** You must host the API on a port that is accessible from the Microcks container. If your tests are using WebApplicationFactory, the API is hosted on an in-memory server and does not expose a port.
+
+One way to do this is to specify a URL to the WebApplication. However, this requires not to use the minimal hosting model (Program.cs without Main and without Startup.cs).
+
+Refactor your `Program.cs` to use Main and create a new class ApplicationBuilder for example, and copy the content of your `Program.cs` into it.
+
+See below an example of a minimal hosting model with a `Main` method:
+```csharp
+public class Program
+{
+    public static void Main(string[] args)
+    {
+        var app = ApplicationBuilder.Create(args);
+        app.Run();
+    }
+}
+```
+
+Then, in your `ApplicationBuilder` class:
+
+```csharp
+public static WebApplication Create(params string[] args)
+{
+    var builder = WebApplication.CreateBuilder(args);
+
+    builder.Services.AddControllers();
+    // Example: Configure OpenTelemetry, HTTP clients, controllers, Swagger, etc.
+    // ...existing code...
+
+    var app = builder.Build();
+
+    app.MapControllers();
+
+    // Example: Enable Swagger in development, HTTPS redirection, authorization, etc.
+    // ...existing code...
+
+    return app;
+}
+```
+Finally, in your test class, you can use the `ApplicationBuilder` to create a new instance of your application and specify the URL:
+
+```csharp
+using var app = ApplicationBuilder.Create();
+app.Urls.Add("http://127.0.0.1:0");
+await app.StartAsync();
+// Get the port assigned by Kestrel
+var port = app.Services.GetRequiredService<IServer>()
+    .Features
+    .Get<IServerAddressesFeature>()
+    .Addresses
+    .First()
+    .Split(':')
+    .Last();
+
+// Expose the port to the Microcks container
+IEnumerable<ushort> ports = [(ushort)port];
+await TestcontainersSettings.ExposeHostPortsAsync(ports)
+    .ConfigureAwait(false);
+```
+
 
 ### Advanced features with MicrocksContainersEnsemble
 
