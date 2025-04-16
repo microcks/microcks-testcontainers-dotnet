@@ -138,6 +138,22 @@ public class MicrocksContainerEnsemble : IAsyncDisposable
     }
 
     /// <summary>
+    /// Configures the Microcks container ensemble with an AMQP connection.
+    /// </summary>
+    /// <param name="amqpConnection">The AMQP connection details.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
+    public MicrocksContainerEnsemble WithAmqpConnection(GenericConnection amqpConnection)
+    {
+        // Ensure the asynchronous feature is enabled.
+        this.WithAsyncFeature();
+
+        this._asyncMinionBuilder = (_asyncMinionBuilder ?? throw new NullReferenceException("MicrocksAsyncMinionBuilder is null"))
+            .WithAmqpConnection(amqpConnection);
+
+        return this;
+    }
+
+    /// <summary>
     /// Starts the Microcks container ensemble asynchronously.
     /// </summary>
     public async Task StartAsync()

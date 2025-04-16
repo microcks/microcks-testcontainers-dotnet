@@ -114,4 +114,23 @@ public sealed class MicrocksAsyncMinionBuilder
 
         return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(new ContainerConfiguration(environments: environments)));
     }
+
+    /// <summary>
+    /// Configures the MicrocksAsyncMinionBuilder to use an AMQP connection.
+    /// </summary>
+    /// <param name="amqpConnection">The AMQP connection details.</param>
+    /// <returns>The updated MicrocksAsyncMinionBuilder instance.</returns>
+    public MicrocksAsyncMinionBuilder WithAmqpConnection(GenericConnection amqpConnection)
+    {
+        _extraProtocols.Add("AMQP");
+        var environments = new Dictionary<string, string>
+        {
+            { "ASYNC_PROTOCOLS", $",{string.Join(",", _extraProtocols)}" },
+            { "AMQP_SERVER", amqpConnection.Url },
+            { "AMQP_USERNAME", amqpConnection.Username },
+            { "AMQP_PASSWORD", amqpConnection.Password },
+        };
+
+        return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(new ContainerConfiguration(environments: environments)));
+    }
 }
