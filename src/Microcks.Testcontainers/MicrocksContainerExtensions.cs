@@ -15,6 +15,7 @@
 //
 //
 
+using ICSharpCode.SharpZipLib.Zip;
 using Microcks.Testcontainers.Model;
 using System.IO;
 using System.Net;
@@ -34,6 +35,9 @@ namespace Microcks.Testcontainers;
 /// </summary>
 public static class MicrocksContainerExtensions
 {
+
+    private static string _metricsAPIDatePattern = "yyyyMMdd";
+
     /// <summary>
     /// HttpClient to use for Microcks.
     /// </summary>
@@ -232,5 +236,92 @@ public static class MicrocksContainerExtensions
         {
             throw new MicrocksException($"Couldn't retrieve events for test case {operationName} on test {testResult.Id}");
         }
+    }
+
+    /// <summary>
+    /// Verify if a service has been invoked at least once.
+    /// </summary>
+    /// <param name="container">Microcks container</param>
+    /// <param name="serviceName">Service name</param>
+    /// <param name="serviceVersion">Service version</param>            
+    /// <returns>True if the service has been invoked at least once, false otherwise</returns>
+    public static Boolean Verify(this MicrocksContainer container, string serviceName, string serviceVersion)
+    {
+        return Verify(container, serviceName, serviceVersion, null);
+    }
+
+    /// <summary>
+    /// Verify if a service has been invoked at least once at a given date.
+    /// </summary>
+    /// <param name="container">Microcks container</param>
+    /// <param name="serviceName">Service name</param>
+    /// <param name="serviceVersion">Service version</param>
+    /// <param name="invocationDate">Date of invocation</param>
+    /// <returns>True if the service has been invoked at least once, false otherwise</returns>
+    public static Boolean Verify(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate)
+    {
+        var dailyInvocationStatistic = container.GetServiceInvocations(serviceName, serviceVersion, invocationDate).Result;
+        if (dailyInvocationStatistic != null)
+        {
+            return dailyInvocationStatistic.DailyCount > 0;
+        }
+        return false;
+    }
+
+    /// <summary>
+    /// Get the number of invocations for a service.
+    /// </summary>
+    /// <param name="container">Microcks container</param>
+    /// <param name="serviceName">Service name</param>
+    /// <param name="serviceVersion">Service version</param>
+    /// <returns>Number of invocations</returns>
+    public static long GetServiceInvocationsCount(this MicrocksContainer container, string serviceName, string serviceVersion)
+    {
+        return GetServiceInvocationsCount(container, serviceName, serviceVersion, null);
+    }
+
+    /// <summary>
+    /// Get the number of invocations for a service at a given date.
+    /// </summary>
+    /// <param name="container">Microcks container</param>
+    /// <param name="serviceName">Service name</param>
+    /// <param name="serviceVersion">Service version</param>
+    /// <param name="invocationDate">Date of invocation</param>
+    /// <returns>Number of invocations</returns>
+    public static long GetServiceInvocationsCount(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate)
+    {
+        var dailyInvocationStatistic = container.GetServiceInvocations(serviceName, serviceVersion, invocationDate).Result;
+        if (dailyInvocationStatistic != null)
+        {
+            return dailyInvocationStatistic.DailyCount;
+        }
+        return 0;
+    }
+
+    internal static async Task<DailyInvocationStatistic> GetServiceInvocations(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate)
+    {
+        // Encode service name and version and take care of replacing '+' by '%20' as metrics API
+        // does not handle '+' in URL path.
+        var encodedName = HttpUtility.UrlEncode(serviceName).Replace("+", "%20");
+        var encodedVersion = HttpUtility.UrlEncode(serviceVersion).Replace("+", "%20");
+        var url = $"{container.GetHttpEndpoint()}api/metrics/invocations/{encodedName}/{encodedVersion}";
+
+        if (invocationDate != null)
+        {
+            url += $"?day={invocationDate.Value.ToString(_metricsAPIDatePattern)}";
+        }
+
+        // Wait to avoid race condition issue when requesting Microcks Metrics REST API.
+        Thread.Sleep(100);
+
+        var response = await Client.GetAsync(url);
+
+        if (response.StatusCode == HttpStatusCode.OK && response.Content.Headers.ContentLength > 0)
+            // Deserialize the response content to DailyInvocationStatistic object
+            // and return it.
+        {
+            return await response.Content.ReadFromJsonAsync<DailyInvocationStatistic>();
+        }
+        return null;
     }
 }
