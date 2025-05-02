@@ -245,9 +245,9 @@ public static class MicrocksContainerExtensions
     /// <param name="serviceVersion">Service version</param>
     /// <param name="invocationDate">Date of invocation</param>
     /// <returns>True if the service has been invoked at least once, false otherwise</returns>
-    public static async Task<Boolean> Verify(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
+    public static async Task<bool> VerifyAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
     {
-        var dailyInvocationStatistic = await container.GetServiceInvocations(serviceName, serviceVersion, invocationDate);
+        var dailyInvocationStatistic = await container.GetServiceInvocationsAsync(serviceName, serviceVersion, invocationDate);
         if (dailyInvocationStatistic != null)
         {
             return dailyInvocationStatistic.DailyCount > 0;
@@ -263,9 +263,9 @@ public static class MicrocksContainerExtensions
     /// <param name="serviceVersion">Service version</param>
     /// <param name="invocationDate">Date of invocation</param>
     /// <returns>Number of invocations</returns>
-    public static async Task<long> GetServiceInvocationsCount(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
+    public static async Task<long> GetServiceInvocationsCountAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
     {
-        var dailyInvocationStatistic = await container.GetServiceInvocations(serviceName, serviceVersion, invocationDate);
+        var dailyInvocationStatistic = await container.GetServiceInvocationsAsync(serviceName, serviceVersion, invocationDate);
         if (dailyInvocationStatistic != null)
         {
             return dailyInvocationStatistic.DailyCount;
@@ -273,7 +273,7 @@ public static class MicrocksContainerExtensions
         return 0;
     }
 
-    internal static async Task<DailyInvocationStatistic> GetServiceInvocations(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
+    internal static async Task<DailyInvocationStatistic> GetServiceInvocationsAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
     {
         // Encode service name and version and take care of replacing '+' by '%20' as metrics API
         // does not handle '+' in URL path.
@@ -292,8 +292,8 @@ public static class MicrocksContainerExtensions
         var response = await Client.GetAsync(url);
 
         if (response.StatusCode == HttpStatusCode.OK && response.Content.Headers.ContentLength > 0)
-            // Deserialize the response content to DailyInvocationStatistic object
-            // and return it.
+        // Deserialize the response content to DailyInvocationStatistic object
+        // and return it.
         {
             return await response.Content.ReadFromJsonAsync<DailyInvocationStatistic>();
         }
