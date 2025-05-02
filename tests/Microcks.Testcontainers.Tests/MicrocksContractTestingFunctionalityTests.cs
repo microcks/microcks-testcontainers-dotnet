@@ -114,6 +114,20 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
         Assert.Equal(3, badTestResult.TestCaseResults.Count);
         Assert.Contains("string found, number expected", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
 
+        // Retrieve messages for the failing test case.
+        List<RequestResponsePair> messages = await _microcksContainer.GetMessagesForTestCaseAsync(badTestResult, "GET /pastries");
+        Assert.Equal(3, messages.Count);
+        Assert.All(messages, message =>
+        {
+          Assert.NotNull(message.Request);
+          Assert.NotNull(message.Response);
+          Assert.NotNull(message.Response.Content);
+          // Check these are the correct requests.
+          Assert.NotNull(message.Request.QueryParameters);
+          Assert.Single(message.Request.QueryParameters);
+          Assert.Equal("size", message.Request.QueryParameters[0].Name);
+        });
+
         // Switch endpoint to good implementation
         var goodTestRequest = new TestRequest
         {

@@ -183,6 +183,32 @@ public static class MicrocksContainerExtensions
     }
 
     /// <summary>
+    /// Retrieve messages exchanged during a test on an endpoint (for further investigation or checks).
+    /// </summary>
+    /// <param name="container">Microcks container</param>
+    /// <param name="testResult">The test result to retrieve messages from</param>
+    /// <param name="operationName">The name of the operation to retrieve messages to test result</param>
+    /// <returns>List of RequestResponsePair</returns>
+    /// <exception cref="MicrocksException">If messages have not been correctly retrieved</exception>
+    public static async Task<List<RequestResponsePair>> GetMessagesForTestCaseAsync(this MicrocksContainer container,
+        TestResult testResult, string operationName)
+    {
+        var operation = operationName.Replace('/', '!');
+        var testCaseId = $"{testResult.Id}-{testResult.TestNumber}-{HttpUtility.UrlEncode(operation)}";
+        var url = $"{container.GetHttpEndpoint()}api/tests/{testResult.Id}/messages/{testCaseId}";
+        var response = await Client.GetAsync(url);
+
+        if (response.StatusCode == HttpStatusCode.OK)
+        {
+            return await response.Content.ReadFromJsonAsync<List<RequestResponsePair>>();
+        }
+        else
+        {
+            throw new MicrocksException($"Couldn't retrieve messages for test case {operationName} on test {testResult.Id}");
+        }
+    }
+
+    /// <summary>
     /// Retrieve event messages received during a test on an endpoint (for further investigation or checks).
     /// </summary>
     /// <param name="container">Microcks container</param>

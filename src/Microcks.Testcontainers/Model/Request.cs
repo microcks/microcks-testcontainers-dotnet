@@ -20,26 +20,26 @@ using System.Text.Json.Serialization;
 namespace Microcks.Testcontainers.Model;
 
 /// <summary>
-/// Represents an event message with details such as name, content, test case ID, headers, ID, and media type.
+/// Domain object representing a Microservice operation / action invocation request.
 /// </summary>
-public class EventMessage : Message
+public class Request : Message
 {
-    
+
     /// <summary>
-    /// ID of the event message.
+    /// Gets or sets the id of the request.
     /// </summary>
     [JsonPropertyName("id")]
     public string Id { get; set; }
 
     /// <summary>
-    /// Media type of the event message.
+    /// Gets or sets the responseId of the request.
     /// </summary>
-    [JsonPropertyName("mediaType")]
-    public string MediaType { get; set; }
+    [JsonPropertyName("responseId")]
+    public string ResponseId { get; set; }
 
     /// <summary>
-    /// Dispatch Criteria of the response.
+    /// Gets or sets the queryParameters of the request.
     /// </summary>
-    [JsonPropertyName("dispatchCriteria")]
-    public string DispatchCriteria { get; set; }
+    [JsonPropertyName("queryParameters")]
+    public List<Parameter> QueryParameters { get; set; }
 }

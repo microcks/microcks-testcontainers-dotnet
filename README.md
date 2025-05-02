@@ -142,6 +142,8 @@ public async Task testOpenAPIContract()
 
 The `TestResult` gives you access to all details regarding success of failure on different test cases.
 
+In addition, you can use the `GetMessagesForTestCaseAsync()` method to retrieve the messages exchanged during the test.
+
 **Important:** You must host the API on a port that is accessible from the Microcks container. If your tests are using WebApplicationFactory, the API is hosted on an in-memory server and does not expose a port.
 
 One way to do this is to specify a URL to the WebApplication. However, this requires not to use the minimal hosting model (Program.cs without Main and without Startup.cs).
@@ -296,3 +298,5 @@ Task<TestResult> testResultFuture = ensemble.MicrocksContainer.TestEndpointAsync
 TestResult testResult = await testResultFuture;
 testResult.IsSuccess.Should().BeTrue();
 ```
+
+In addition, you can use the `GetEventMessagesForTestCaseAsync()` method to retrieve the events received during the test.
