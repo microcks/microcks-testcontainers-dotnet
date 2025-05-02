@@ -22,7 +22,7 @@ namespace Microcks.Testcontainers.Model;
 /// <summary>
 /// Domain object representing a microservice operation / action invocation response.
 /// </summary>
-public class Message
+public abstract class Message
 {
 
     /// <summary>
