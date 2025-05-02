@@ -108,6 +108,22 @@ The container provides methods for different supported API styles/protocols (Soa
 
 The container also provides `GetHttpEndpoint()` for raw access to those API endpoints.
 
+### Verifying mock endpoint has been invoked
+
+Once the mock endpoint has been invoked, you'd probably need to ensure that the mock have been really invoked.
+
+You can do it like this:
+
+```csharp
+var invoked = container.Verify("API Pastries", "0.0.1");
+```
+
+Or like this:
+
+```csharp
+var serviceInvocationsCount = container.GetServiceInvocationsCount("API Pastries", "0.0.1");
+```
+
 ### Launching new contract-tests
 
 If you want to ensure that your application under test is conformant to an OpenAPI contract (or other type of contract),
