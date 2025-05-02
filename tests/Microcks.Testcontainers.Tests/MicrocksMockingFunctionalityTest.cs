@@ -23,6 +23,7 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace Microcks.Testcontainers.Tests;
 
@@ -112,12 +113,12 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
     }
 
     [Fact]
-    public void ShouldMockVariousCapabilities()
+    public async Task ShouldMockVariousCapabilities()
     {
         var pastries = _microcksContainer.GetRestMockEndpoint("API Pastries", "0.0.1");
 
-        Assert.False(_microcksContainer.Verify("API Pastries", "0.0.1"));
-        Assert.Equal(0, _microcksContainer.GetServiceInvocationsCount("API Pastries", "0.0.1"));
+        Assert.False(await _microcksContainer.Verify("API Pastries", "0.0.1"));
+        Assert.Equal(0, await _microcksContainer.GetServiceInvocationsCount("API Pastries", "0.0.1"));
 
         Given()
           .When()
@@ -126,8 +127,8 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
           .StatusCode(HttpStatusCode.OK)
           .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
 
-        Assert.True(_microcksContainer.Verify("API Pastries", "0.0.1"));
-        Assert.Equal(1, _microcksContainer.GetServiceInvocationsCount("API Pastries", "0.0.1"));
+        Assert.True(await _microcksContainer.Verify("API Pastries", "0.0.1"));
+        Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCount("API Pastries", "0.0.1"));
 
         // Vérifier que le mock de l'API Pastry est bien disponible
         Given()
@@ -137,8 +138,8 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
           .StatusCode(HttpStatusCode.OK)
           .Body("$.name", IsEqualMatcher<string>.EqualTo("Eclair Chocolat"));
 
-        Assert.True(_microcksContainer.Verify("API Pastries", "0.0.1"));
-        Assert.Equal(2, _microcksContainer.GetServiceInvocationsCount("API Pastries", "0.0.1"));
+        Assert.True(await _microcksContainer.Verify("API Pastries", "0.0.1"));
+        Assert.Equal(2, await _microcksContainer.GetServiceInvocationsCount("API Pastries", "0.0.1"));
 
         // Switch to the other version of the API Pastry
         var baseApiUrl = _microcksContainer.GetRestMockEndpoint("API Pastry - 2.0", "2.0.0");
@@ -150,8 +151,8 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
           .StatusCode(HttpStatusCode.OK)
           .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
 
-        Assert.True(_microcksContainer.Verify("API Pastry - 2.0", "2.0.0"));
-        Assert.Equal(1, _microcksContainer.GetServiceInvocationsCount("API Pastry - 2.0", "2.0.0"));
+        Assert.True(await _microcksContainer.Verify("API Pastry - 2.0", "2.0.0"));
+        Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCount("API Pastry - 2.0", "2.0.0"));
     }
 
 }

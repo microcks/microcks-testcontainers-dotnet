@@ -15,7 +15,6 @@
 //
 //
 
-using ICSharpCode.SharpZipLib.Zip;
 using Microcks.Testcontainers.Model;
 using System.IO;
 using System.Net;
@@ -239,18 +238,6 @@ public static class MicrocksContainerExtensions
     }
 
     /// <summary>
-    /// Verify if a service has been invoked at least once.
-    /// </summary>
-    /// <param name="container">Microcks container</param>
-    /// <param name="serviceName">Service name</param>
-    /// <param name="serviceVersion">Service version</param>            
-    /// <returns>True if the service has been invoked at least once, false otherwise</returns>
-    public static Boolean Verify(this MicrocksContainer container, string serviceName, string serviceVersion)
-    {
-        return Verify(container, serviceName, serviceVersion, null);
-    }
-
-    /// <summary>
     /// Verify if a service has been invoked at least once at a given date.
     /// </summary>
     /// <param name="container">Microcks container</param>
@@ -258,26 +245,14 @@ public static class MicrocksContainerExtensions
     /// <param name="serviceVersion">Service version</param>
     /// <param name="invocationDate">Date of invocation</param>
     /// <returns>True if the service has been invoked at least once, false otherwise</returns>
-    public static Boolean Verify(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate)
+    public static async Task<Boolean> Verify(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
     {
-        var dailyInvocationStatistic = container.GetServiceInvocations(serviceName, serviceVersion, invocationDate).Result;
+        var dailyInvocationStatistic = await container.GetServiceInvocations(serviceName, serviceVersion, invocationDate);
         if (dailyInvocationStatistic != null)
         {
             return dailyInvocationStatistic.DailyCount > 0;
         }
         return false;
-    }
-
-    /// <summary>
-    /// Get the number of invocations for a service.
-    /// </summary>
-    /// <param name="container">Microcks container</param>
-    /// <param name="serviceName">Service name</param>
-    /// <param name="serviceVersion">Service version</param>
-    /// <returns>Number of invocations</returns>
-    public static long GetServiceInvocationsCount(this MicrocksContainer container, string serviceName, string serviceVersion)
-    {
-        return GetServiceInvocationsCount(container, serviceName, serviceVersion, null);
     }
 
     /// <summary>
@@ -288,9 +263,9 @@ public static class MicrocksContainerExtensions
     /// <param name="serviceVersion">Service version</param>
     /// <param name="invocationDate">Date of invocation</param>
     /// <returns>Number of invocations</returns>
-    public static long GetServiceInvocationsCount(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate)
+    public static async Task<long> GetServiceInvocationsCount(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
     {
-        var dailyInvocationStatistic = container.GetServiceInvocations(serviceName, serviceVersion, invocationDate).Result;
+        var dailyInvocationStatistic = await container.GetServiceInvocations(serviceName, serviceVersion, invocationDate);
         if (dailyInvocationStatistic != null)
         {
             return dailyInvocationStatistic.DailyCount;
@@ -298,7 +273,7 @@ public static class MicrocksContainerExtensions
         return 0;
     }
 
-    internal static async Task<DailyInvocationStatistic> GetServiceInvocations(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate)
+    internal static async Task<DailyInvocationStatistic> GetServiceInvocations(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
     {
         // Encode service name and version and take care of replacing '+' by '%20' as metrics API
         // does not handle '+' in URL path.
