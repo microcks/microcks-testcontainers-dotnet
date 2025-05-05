@@ -22,11 +22,12 @@ using Microcks.Testcontainers.Model;
 using System;
 using System.Diagnostics;
 
-namespace Microcks.Testcontainers.Tests;
+namespace Microcks.Testcontainers.Tests.Async;
 
 /// <summary>
 /// This class contains tests for the WaitForConditionAsync method.
 /// </summary>
+[Collection(nameof(WsCollection))]
 public class WaitForConditionAsyncTests : IAsyncLifetime
 {
     /// <summary>
