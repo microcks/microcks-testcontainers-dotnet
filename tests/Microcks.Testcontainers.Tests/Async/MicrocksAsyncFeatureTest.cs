@@ -29,6 +29,7 @@ using Microsoft.Extensions.Logging;
 
 namespace Microcks.Testcontainers.Tests.Async;
 
+[Collection(nameof(WsCollection))]
 public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
 {
     /// <summary>
