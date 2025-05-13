@@ -24,6 +24,7 @@ using System.IO;
 using System.Net;
 using System.Text.Json;
 using System.Threading.Tasks;
+using Xunit.Internal;
 
 namespace Microcks.Testcontainers.Tests;
 
@@ -36,14 +37,14 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
     .WithSecondaryArtifacts("apipastries-postman-collection.json")
     .Build();
 
-  public Task DisposeAsync()
+  public async ValueTask DisposeAsync()
   {
-    return _microcksContainer.DisposeAsync().AsTask();
+    await _microcksContainer.DisposeAsync();
   }
 
-  public Task InitializeAsync()
+  public async ValueTask InitializeAsync()
   {
-    return _microcksContainer.StartAsync();
+    await _microcksContainer.StartAsync();
   }
 
   [Fact]
@@ -95,7 +96,7 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
     // newtonsoft json jsonpath $.length is not supported
     var services = await verifiableResponse
       .Extract()
-      .Response().Content.ReadAsStringAsync();
+      .Response().Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
     var document = JsonDocument.Parse(services);
     Assert.Equal(7, document.RootElement.GetArrayLength());

@@ -23,6 +23,7 @@ using Microcks.Testcontainers.Model;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using TestResult = Microcks.Testcontainers.Model.TestResult;
 
 namespace Microcks.Testcontainers.Tests;
 
@@ -58,27 +59,24 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
       .Build();
   }
 
-  public Task DisposeAsync()
+  public async ValueTask DisposeAsync()
   {
-    return Task.WhenAll(
-      _microcksContainer.DisposeAsync().AsTask(),
-      _badImpl.DisposeAsync().AsTask(),
-      _goodImpl.DisposeAsync().AsTask(),
-      _network.DisposeAsync().AsTask()
-    );
+    // Dispose of the containers in reverse order of creation
+    await _microcksContainer.DisposeAsync();
+    await _badImpl.DisposeAsync();
+    await _goodImpl.DisposeAsync();
+    await _network.DisposeAsync();
   }
 
-  public Task InitializeAsync()
+  public async ValueTask InitializeAsync()
   {
     _microcksContainer.Started +=
       (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
 
-    return Task.WhenAll(
-      _network.CreateAsync(),
-      _microcksContainer.StartAsync(),
-      _badImpl.StartAsync(),
-      _goodImpl.StartAsync()
-    );
+    await _network.CreateAsync();
+    await _microcksContainer.StartAsync();
+    await _badImpl.StartAsync();
+    await _goodImpl.StartAsync();
   }
 
   [Fact]
@@ -150,18 +148,18 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
       TestEndpoint = "http://good-impl:3002",
       Timeout = TimeSpan.FromSeconds(2),
       OperationsHeaders = new Dictionary<string, List<Header>>()
-              {
-                {
-                  "GET /pastries",
-                  new List<Header>
-                  {
-                    new() {
-                      Name = "X-Custom-Header-1",
-                      Values = "value1,value2,value3"
-                    }
-                  }
-                }
-              }
+      {
+        {
+          "GET /pastries",
+          new List<Header>
+          {
+            new() {
+              Name = "X-Custom-Header-1",
+              Values = "value1,value2,value3"
+            }
+          }
+        }
+      }
     };
 
     TestResult goodTestResultWithHeader = await _microcksContainer.TestEndpointAsync(goodTestRequestWithHeader);

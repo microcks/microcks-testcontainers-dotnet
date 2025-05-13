@@ -22,6 +22,7 @@ using System.Net;
 using System.Text.Json;
 using Microcks.Testcontainers.Model;
 using RestAssured.Logging;
+using Xunit.Internal;
 
 namespace Microcks.Testcontainers.Tests;
 
@@ -31,14 +32,14 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
       .WithSecret(new SecretBuilder().WithName("my-secret").WithToken("abc-123-xyz").Build())
       .Build();
 
-    public Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return _microcksContainer.DisposeAsync().AsTask();
+        await _microcksContainer.DisposeAsync();
     }
 
-    public Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
-        return _microcksContainer.StartAsync();
+        await _microcksContainer.StartAsync();
     }
 
     [Fact]
@@ -55,7 +56,7 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
           .And()
           .Body("$[0].token", Is.EqualTo("abc-123-xyz"))
           .Extract()
-          .Response().Content.ReadAsStringAsync();
+          .Response().Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         var document = JsonDocument.Parse(result);
         Assert.Equal(1, document.RootElement.GetArrayLength());

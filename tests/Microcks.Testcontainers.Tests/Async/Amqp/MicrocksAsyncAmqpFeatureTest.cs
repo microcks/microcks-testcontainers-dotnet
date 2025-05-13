@@ -5,7 +5,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//  http://www.apache.org/licenses/LICENSE-2.0 
+//  http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -32,7 +32,7 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
     private MicrocksContainerEnsemble _ensemble;
     private INetwork _network;
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _network = new NetworkBuilder().Build();
         _rabbitMqContainer = new RabbitMqBuilder()
@@ -53,7 +53,7 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
         await _ensemble.StartAsync();
     }
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         if (_ensemble != null)
             await _ensemble.DisposeAsync();
@@ -61,6 +61,7 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
             await _rabbitMqContainer.DisposeAsync();
         if (_network != null)
             await _network.DisposeAsync();
+        GC.SuppressFinalize(this);
     }
 
     [Fact]
@@ -79,13 +80,13 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
         };
 
         string receivedMessage = null;
-        using var connection = await factory.CreateConnectionAsync();
-        using var channel = await connection.CreateChannelAsync();
+        await using var connection = await factory.CreateConnectionAsync(cancellationToken: TestContext.Current.CancellationToken);
+        await using var channel = await connection.CreateChannelAsync(cancellationToken: TestContext.Current.CancellationToken);
 
-        await channel.ExchangeDeclareAsync(amqpDestination, "topic", false);
-        var queueDeclareResult = await channel.QueueDeclareAsync();
+        await channel.ExchangeDeclareAsync(amqpDestination, "topic", false, cancellationToken: TestContext.Current.CancellationToken);
+        var queueDeclareResult = await channel.QueueDeclareAsync(cancellationToken: TestContext.Current.CancellationToken);
         var queueName = queueDeclareResult.QueueName;
-        await channel.QueueBindAsync(queueName, amqpDestination, "#");
+        await channel.QueueBindAsync(queueName, amqpDestination, "#", cancellationToken: TestContext.Current.CancellationToken);
 
         var consumer = new AsyncEventingBasicConsumer(channel);
         var messageReceived = new ManualResetEventSlim(false);
@@ -93,14 +94,14 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
         consumer.ReceivedAsync += async (model, ea) =>
         {
             receivedMessage = System.Text.Encoding.UTF8.GetString(ea.Body.ToArray());
-            await channel.BasicAckAsync(ea.DeliveryTag, false);
+            await channel.BasicAckAsync(ea.DeliveryTag, false, cancellationToken: TestContext.Current.CancellationToken);
             messageReceived.Set();
         };
 
-        await channel.BasicConsumeAsync(queue: queueName, autoAck: false, consumer: consumer);
+        await channel.BasicConsumeAsync(queue: queueName, autoAck: false, consumer: consumer, cancellationToken: TestContext.Current.CancellationToken);
 
         // Attendre le message (timeout 5s)
-        messageReceived.Wait(TimeSpan.FromSeconds(5));
+        messageReceived.Wait(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
 
         Assert.NotNull(receivedMessage);
         Assert.True(receivedMessage.Length > 1);

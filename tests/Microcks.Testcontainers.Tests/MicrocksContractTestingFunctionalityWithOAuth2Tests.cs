@@ -24,6 +24,7 @@ using Microcks.Testcontainers.Helpers;
 using System;
 using System.Net;
 using Testcontainers.Keycloak;
+using TestResult = Microcks.Testcontainers.Model.TestResult;
 
 namespace Microcks.Testcontainers.Tests;
 
@@ -59,27 +60,23 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
             .Build();
     }
 
-    public Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
-        return Task.WhenAll(
-            _microcksContainer.DisposeAsync().AsTask(),
-            _keycloak.DisposeAsync().AsTask(),
-            _goodImpl.DisposeAsync().AsTask(),
-            _network.DisposeAsync().AsTask()
-        );
+        await _microcksContainer.DisposeAsync();
+        await _keycloak.DisposeAsync();
+        await _goodImpl.DisposeAsync();
+        await _network.DisposeAsync();
     }
 
-    public Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         _microcksContainer.Started +=
             (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
 
-        return Task.WhenAll(
-            _network.CreateAsync(),
-            _microcksContainer.StartAsync(),
-            _keycloak.StartAsync(),
-            _goodImpl.StartAsync()
-        );
+        await _network.CreateAsync();
+        await _microcksContainer.StartAsync();
+        await _keycloak.StartAsync();
+        await _goodImpl.StartAsync();
     }
 
     [Fact]
@@ -114,6 +111,7 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
                 .WithGrantType(OAuth2GrantType.CLIENT_CREDENTIALS)
                 .Build()
         };
+
         TestResult testResult = await _microcksContainer.TestEndpointAsync(testRequest);
         Assert.True(testResult.Success);
         Assert.Equal("http://good-impl:3002", testResult.TestedEndpoint);

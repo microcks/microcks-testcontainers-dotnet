@@ -16,7 +16,6 @@
 //
 
 using System;
-using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using Confluent.Kafka;
@@ -40,13 +39,13 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
 
     private KafkaContainer _kafkaContainer;
 
-    public async Task DisposeAsync()
+    public async ValueTask DisposeAsync()
     {
         await this._microcksContainerEnsemble.DisposeAsync();
         await this._kafkaContainer.DisposeAsync();
     }
 
-    public async Task InitializeAsync()
+    public async ValueTask InitializeAsync()
     {
         var network = new NetworkBuilder().Build();
 
@@ -145,7 +144,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
             .MicrocksContainer
             .TestEndpointAsync(testRequest);
 
-        await Task.Delay(750);
+        await Task.Delay(750, TestContext.Current.CancellationToken);
 
         // Act
         for (var i = 0; i < 5; i++)
@@ -155,8 +154,8 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
                 Key = Guid.NewGuid().ToString(),
                 Value = message
             });
-            producer.Flush();
-            await Task.Delay(500);
+            producer.Flush(TestContext.Current.CancellationToken);
+            await Task.Delay(500, TestContext.Current.CancellationToken);
         }
 
         // Wait for a test result
@@ -214,7 +213,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
         var taskTestResult = this._microcksContainerEnsemble
             .MicrocksContainer
             .TestEndpointAsync(testRequest);
-        await Task.Delay(750);
+        await Task.Delay(750, TestContext.Current.CancellationToken);
 
         // Act
         for (var i = 0; i < 5; i++)
@@ -224,8 +223,8 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
                 Key = Guid.NewGuid().ToString(),
                 Value = message
             });
-            producer.Flush();
-            await Task.Delay(500);
+            producer.Flush(TestContext.Current.CancellationToken);
+            await Task.Delay(500, TestContext.Current.CancellationToken);
         }
 
         // Wait for a test result
