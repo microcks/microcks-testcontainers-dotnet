@@ -38,9 +38,9 @@ Current development version is `0.3.0`.
 
 ## Community
 
-* [Documentation](https://microcks.io/documentation/tutorials/getting-started/)
-* [Microcks Community](https://github.com/microcks/community) and community meeting
-* Join us on [Discord](https://microcks.io/discord-invite/), on [GitHub Discussions](https://github.com/orgs/microcks/discussions) or [CNCF Slack #microcks channel](https://cloud-native.slack.com/archives/C05BYHW1TNJ)
+-   [Documentation](https://microcks.io/documentation/tutorials/getting-started/)
+-   [Microcks Community](https://github.com/microcks/community) and community meeting
+-   Join us on [Discord](https://microcks.io/discord-invite/), on [GitHub Discussions](https://github.com/orgs/microcks/discussions) or [CNCF Slack #microcks channel](https://cloud-native.slack.com/archives/C05BYHW1TNJ)
 
 To get involved with our community, please make sure you are familiar with the project's [Code of Conduct](./CODE_OF_CONDUCT.md).
 
@@ -55,7 +55,6 @@ dotnet add package Microcks.Testcontainers --version 0.2.0
 ### Startup the container
 
 You just have to specify the container image you'd like to use. This library requires a Microcks `uber` distribution (with no MongoDB dependency).
-
 
 ```csharp
 MicrocksContainer container = new MicrocksBuilder()
@@ -167,6 +166,7 @@ One way to do this is to specify a URL to the WebApplication. However, this requ
 Refactor your `Program.cs` to use Main and create a new class ApplicationBuilder for example, and copy the content of your `Program.cs` into it.
 
 See below an example of a minimal hosting model with a `Main` method:
+
 ```csharp
 public class Program
 {
@@ -199,6 +199,7 @@ public static WebApplication Create(params string[] args)
     return app;
 }
 ```
+
 Finally, in your test class, you can use the `ApplicationBuilder` to create a new instance of your application and specify the URL:
 
 ```csharp
@@ -220,17 +221,16 @@ await TestcontainersSettings.ExposeHostPortsAsync(ports)
     .ConfigureAwait(false);
 ```
 
-
 ### Advanced features with MicrocksContainersEnsemble
 
 The `MicrocksContainer` referenced above supports essential features of Microcks provided by the main Microcks container.
 The list of supported features is the following:
 
-* Mocking of REST APIs using different kinds of artifacts,
-* Contract-testing of REST APIs using `OPEN_API_SCHEMA` runner/strategy,
-* Mocking and contract-testing of SOAP WebServices,
-* Mocking and contract-testing of GraphQL APIs,
-* Mocking and contract-testing of gRPC APIs.
+-   Mocking of REST APIs using different kinds of artifacts,
+-   Contract-testing of REST APIs using `OPEN_API_SCHEMA` runner/strategy,
+-   Mocking and contract-testing of SOAP WebServices,
+-   Mocking and contract-testing of GraphQL APIs,
+-   Mocking and contract-testing of gRPC APIs.
 
 To support features like Asynchronous contract-testing, we introduced `MicrocksContainersEnsemble` that allows managing
 additional Microcks services. `MicrocksContainersEnsemble` allow you to implement
@@ -244,7 +244,7 @@ You can create and build an ensemble that way:
 MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, MicrocksImage)
     .WithMainArtifacts("pastry-orders-asyncapi.yml");
 
-ensemble.StartAsync();
+await ensemble.StartAsync();
 ```
 
 A `MicrocksContainer` is wrapped by an ensemble and is still available to import artifacts and execute test methods.
@@ -262,10 +262,11 @@ MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, Mic
     .WithMainArtifacts("pastry-orders-asyncapi.yml")
     .WithAsyncFeature();
 
-ensemble.StartAsync();
+await ensemble.StartAsync();
 ```
 
 #### Asynchronous API support
+
 Asynchronous API feature needs to be explicitly enabled as well.
 In case you want to use it for mocking purposes,
 you'll have to specify additional connection details to the broker of your choice.
@@ -275,12 +276,23 @@ To add a note indicating that it is not necessary to call `WithAsyncFeature()` w
 See an example below with connection to a Kafka broker:
 
 ```csharp
+KafkaContainer kafkaContainer new KafkaBuilder()
+            .WithImage(KafkaImage)
+            .WithNetwork(network)
+            .WithNetworkAliases("kafka")
+            .WithListener("kafka:19092")
+            .Build();
+
+await kafkaContainer.StartAsync();
+
 MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, MicrocksImage)
     .WithMainArtifacts("pastry-orders-asyncapi.yml")
     .WithKafkaConnection(new KafkaConnection($"kafka:19092"));
 
-ensemble.StartAsync();
+await ensemble.StartAsync();
 ```
+
+As you can see we start the `KafkaContainer` with a specific listener, you should provide the same listener as the `KafkaConnection` this will permit `MicrocksEnsemble` to connect to the `KafkaContainer`.
 
 ##### Using mock endpoints for your dependencies
 
@@ -296,6 +308,7 @@ string kafkaTopic = ensemble.AsyncMinionContainer
 
 Using contract-testing techniques on Asynchronous endpoints may require a different style of interacting with the Microcks
 container. For example, you may need to:
+
 1. Start the test making Microcks listen to the target async endpoint,
 2. Activate your System Under Tests so that it produces an event,
 3. Finalize the Microcks tests and actually ensure you received one or many well-formed events.
