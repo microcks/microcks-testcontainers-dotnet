@@ -50,7 +50,12 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
     {
         var network = new NetworkBuilder().Build();
 
-        this._kafkaContainer = KafkaContainerHelper.CreateKafkaContainer(network);
+        this._kafkaContainer = new KafkaBuilder()
+            .WithImage("confluentinc/cp-kafka:7.8.0")
+            .WithNetwork(network)
+            .WithNetworkAliases("kafka")
+            .WithListener("kafka:19092")
+            .Build();
 
         // Start the Kafka container
         await this._kafkaContainer.StartAsync();
