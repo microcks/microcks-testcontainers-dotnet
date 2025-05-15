@@ -21,76 +21,26 @@ using System.Linq;
 using System.Net.WebSockets;
 using System.Text;
 using System.Threading;
-using DotNet.Testcontainers;
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
 using Microcks.Testcontainers.Model;
 using Microsoft.Extensions.Logging;
 
 namespace Microcks.Testcontainers.Tests.Async;
 
-[Collection(nameof(WsCollection))]
-public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
+[Collection(nameof(MicrocksAsyncFeatureCollection))]
+public sealed class MicrocksAsyncFeatureTest
 {
-    /// <summary>
-    /// Image name for the Microcks container.
-    /// </summary>
-    private const string MicrocksImage = "quay.io/microcks/microcks-uber:1.10.1-native";
+    private readonly MicrocksAsyncFeatureFixture fixture;
 
-    private const string BadPastryAsyncImage = "quay.io/microcks/contract-testing-demo-async:01";
-    private const string GoodPastryAsyncImage = "quay.io/microcks/contract-testing-demo-async:02";
-
-    private MicrocksContainerEnsemble _microcksContainerEnsemble;
-    private IContainer _wsGoodImplContainer;
-    private IContainer _wsBadImplContainer;
-
-    public async Task DisposeAsync()
+    public MicrocksAsyncFeatureTest(MicrocksAsyncFeatureFixture fixture)
     {
-        await this._microcksContainerEnsemble.DisposeAsync();
-        await this._wsBadImplContainer.DisposeAsync();
-        await this._wsGoodImplContainer.DisposeAsync();
-    }
-
-    public async Task InitializeAsync()
-    {
-        ConsoleLogger.Instance.DebugLogLevelEnabled = true;
-
-        this._microcksContainerEnsemble = new MicrocksContainerEnsemble(MicrocksImage)
-            .WithMainArtifacts("pastry-orders-asyncapi.yml")
-            .WithAsyncFeature();
-
-        this._wsBadImplContainer = new ContainerBuilder()
-            .WithImage(BadPastryAsyncImage)
-            .WithNetwork(this._microcksContainerEnsemble.Network)
-            .WithNetworkAliases("bad-impl")
-            .WithExposedPort(4001)
-            .WithWaitStrategy(
-                Wait.ForUnixContainer()
-                    .UntilMessageIsLogged(".*Starting WebSocket server on ws://localhost:4001/websocket.*")
-            )
-            .Build();
-
-        this._wsGoodImplContainer = new ContainerBuilder()
-            .WithImage(GoodPastryAsyncImage)
-            .WithNetwork(this._microcksContainerEnsemble.Network)
-            .WithNetworkAliases("good-impl")
-            .WithExposedPort(4002)
-            .WithWaitStrategy(
-                Wait.ForUnixContainer()
-                    .UntilMessageIsLogged(".*Starting WebSocket server on ws://localhost:4002/websocket.*")
-            )
-            .Build();
-
-        await this._microcksContainerEnsemble.StartAsync();
-        await this._wsBadImplContainer.StartAsync();
-        await this._wsGoodImplContainer.StartAsync();
+        this.fixture = fixture;
     }
 
     [Fact]
     public void ShouldDetermineCorrectImageMessage()
     {
         Assert.Equal("quay.io/microcks/microcks-uber-async-minion:1.10.1",
-            this._microcksContainerEnsemble.AsyncMinionContainer.Image.FullName);
+            this.fixture.MicrocksContainerEnsemble.AsyncMinionContainer.Image.FullName);
     }
 
     /// <summary>
@@ -101,7 +51,8 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
     public async Task ShouldReceivedWebSocketMessageWhenMessageIsEmitted()
     {
         // Get the WebSocket endpoint for the "Pastry orders API" with version "0.1.0" and subscription "SUBSCRIBE pastry/orders".
-        var webSocketEndpoint = _microcksContainerEnsemble
+        var webSocketEndpoint = fixture
+            .MicrocksContainerEnsemble
             .AsyncMinionContainer
             .GetWebSocketMockEndpoint("Pastry orders API", "0.1.0", "SUBSCRIBE pastry/orders");
         const string expectedMessage = "{\"id\":\"4dab240d-7847-4e25-8ef3-1530687650c8\",\"customerId\":\"fe1088b3-9f30-4dc1-a93d-7b74f0a072b9\",\"status\":\"VALIDATED\",\"productQuantities\":[{\"quantity\":2,\"pastryName\":\"Croissant\"},{\"quantity\":1,\"pastryName\":\"Millefeuille\"}]}";
@@ -139,7 +90,7 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
             TestEndpoint = "ws://bad-impl:4001/websocket",
         };
 
-        var taskTestResult = _microcksContainerEnsemble.MicrocksContainer
+        var taskTestResult = fixture.MicrocksContainerEnsemble.MicrocksContainer
             .TestEndpointAsync(testRequest);
 
         stopwatch.Start();
@@ -147,7 +98,7 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
         stopwatch.Stop();
 
         // Add logging to trace the test result
-        var logger = _microcksContainerEnsemble
+        var logger = fixture.MicrocksContainerEnsemble
                         .MicrocksContainer
                         .Logger;
 
@@ -184,7 +135,7 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
             TestEndpoint = "ws://good-impl:4002/websocket",
         };
 
-        var taskTestResult = _microcksContainerEnsemble.MicrocksContainer
+        var taskTestResult = fixture.MicrocksContainerEnsemble.MicrocksContainer
             .TestEndpointAsync(testRequest);
 
         var testResult = await taskTestResult;
@@ -196,5 +147,36 @@ public sealed class MicrocksAsyncFeatureTest : IAsyncLifetime
 
         Assert.NotEmpty(testResult.TestCaseResults.First().TestStepResults);
         Assert.True(string.IsNullOrEmpty(testResult.TestCaseResults.First().TestStepResults.First().Message));
+    }
+
+        /// <summary>
+    /// Test that verifies that the WaitForConditionAsync method throws a TaskCanceledException
+    /// when the specified timeout is reached.
+    /// </summary>
+    [Fact]
+    public async Task WaitForConditionAsyncShouldThrowTaskCanceledExceptionWhenTimeoutIsReached()
+    {
+        // New Test request
+        var testRequest = new TestRequest
+        {
+            ServiceId = "Pastry orders API:0.1.0",
+            RunnerType = TestRunnerType.ASYNC_API_SCHEMA,
+            Timeout = TimeSpan.FromMilliseconds(200),
+            TestEndpoint = "ws://good-impl:4002/websocket",
+        };
+
+        var taskTestResult = fixture.MicrocksContainerEnsemble.MicrocksContainer
+            .TestEndpointAsync(testRequest);
+
+        var stopwatch = new Stopwatch();
+        stopwatch.Start();
+        var testResult = await taskTestResult;
+        stopwatch.Stop();
+
+        // Assert
+        Assert.True(stopwatch.ElapsedMilliseconds > 200);
+        Assert.True(testResult.InProgress);
+        Assert.False(testResult.Success);
+        Assert.Equal(testRequest.TestEndpoint, testResult.TestedEndpoint);
     }
 }
