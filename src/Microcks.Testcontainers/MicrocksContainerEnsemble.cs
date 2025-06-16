@@ -26,7 +26,7 @@ namespace Microcks.Testcontainers;
 /// Represents a container ensemble for Microcks,
 /// including the main Microcks container and an optional asynchronous minion container.
 /// </summary>
-public class MicrocksContainerEnsemble : IAsyncDisposable
+public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotManager<MicrocksContainerEnsemble>
 {
     private readonly MicrocksBuilder _microcksBuilder;
 
@@ -87,6 +87,24 @@ public class MicrocksContainerEnsemble : IAsyncDisposable
     public MicrocksContainerEnsemble WithMainArtifacts(params string[] mainArtifacts)
     {
         this._microcksBuilder.WithMainArtifacts(mainArtifacts);
+        return this;
+    }
+
+    public MicrocksContainerEnsemble WithMainRemoteArtifacts(params string[] mainRemoteArtifacts)
+    {
+        this._microcksBuilder.WithMainRemoteArtifacts(mainRemoteArtifacts);
+        return this;
+    }
+
+    public MicrocksContainerEnsemble WithSecondaryArtifacts(params string[] secondaryArtifacts)
+    {
+        this._microcksBuilder.WithSecondaryArtifacts(secondaryArtifacts);
+        return this;
+    }
+
+    public MicrocksContainerEnsemble WithSnapshots(params string[] snapshots)
+    {
+        this._microcksBuilder.WithSnapshots(snapshots);
         return this;
     }
 
