@@ -20,7 +20,8 @@ using Microcks.Testcontainers.Helpers;
 namespace Microcks.Testcontainers;
 
 /// <inheritdoc cref="ContainerBuilder{TBuilderEntity, TContainerEntity, TConfigurationEntity}" />
-public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, MicrocksContainer, MicrocksConfiguration>
+public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, MicrocksContainer, MicrocksConfiguration>,
+    IArtifactAndSnapshotManager<MicrocksBuilder>
 {
     /// <summary>
     /// Image name for the Microcks container.
