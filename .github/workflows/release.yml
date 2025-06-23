@@ -1,0 +1,98 @@
+name: release
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to release'
+        required: true
+      version:
+        description: 'Release version'
+        required: true
+      nextVersion:
+        description: 'Next version after release (ALPHA VersionSuffix will be added automatically)'
+        required: true
+jobs:
+  release:
+    name: Release
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      contents: write
+      deployments: write
+      id-token: write
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 #v4.2.2
+        with:
+          ssh-key: ${{ secrets.RELEASE_DEPLOY_KEY }}
+          lfs: true
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.branch }}
+
+      - name: 🛠️ Setup .NET
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 #v4.3.1
+        with:
+          global-json-file: global.json
+
+      - name: Set release version
+        run: |
+          # Comment alpha version suffix and force version prefix to release version
+          sed -i '/<VersionSuffix>alpha<\/VersionSuffix>/ s|.*|<!-- & -->|' Directory.Build.props 
+          sed -i "s|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${{ github.event.inputs.version }}</VersionPrefix>|" Directory.Build.props
+
+      - name: 🔧 Restore .NET Tools
+        run: dotnet tool restore
+
+      - name: 🔧 Restore dependencies
+        run: dotnet restore
+
+      - name: 🏗 Build
+        run: dotnet build --configuration Release --no-restore
+
+      - name: Commit, push and tag changes
+        run: |
+          git config user.name "microcks-bot"
+          git config user.email "info@microcks.io"
+          git commit -S -m "Releasing version ${{ github.event.inputs.version }}" .
+          git tag ${{ github.event.inputs.version }}
+          git push origin ${{ github.event.inputs.version }}
+
+      - name: Generate SBOM
+        run: |
+          curl -Lo $RUNNER_TEMP/sbom-tool https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64
+          chmod +x $RUNNER_TEMP/sbom-tool
+          $RUNNER_TEMP/sbom-tool generate -b ./src/Microcks.Testcontainers/obj/Release/net6.0 -bc . -pn Microcks.Testcontainers -pv ${{ github.event.inputs.version }} -ps Microcks -nsb https://microcks.io
+          $RUNNER_TEMP/sbom-tool generate -b ./src/Microcks.Testcontainers/obj/Release/net8.0 -bc . -pn Microcks.Testcontainers -pv ${{ github.event.inputs.version }} -ps Microcks -nsb https://microcks.io
+          cp ./src/Microcks.Testcontainers/obj/Release/net6.0/_manifest/spdx_2.2/manifest.spdx.json ./Microcks.Testcontainers-net6.0.spdx-sbom.json
+          cp ./src/Microcks.Testcontainers/obj/Release/net8.0/_manifest/spdx_2.2/manifest.spdx.json ./Microcks.Testcontainers-net8.0.spdx-sbom.json
+
+      - name: Publish release with JReleaser
+        uses: jreleaser/release-action@v2
+        env:
+          JRELEASER_PROJECT_VERSION: ${{ github.event.inputs.version }}
+          JRELEASER_GPG_PASSPHRASE: ${{ secrets.JRELEASER_GPG_PASSPHRASE }}
+          JRELEASER_GPG_SECRET_KEY: ${{ secrets.JRELEASER_GPG_SECRET_KEY }}
+          JRELEASER_GPG_PUBLIC_KEY: ${{ secrets.JRELEASER_GPG_PUBLIC_KEY }}
+          JRELEASER_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # Persist logs
+      - name: JReleaser release output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jreleaser-release
+          path: |
+            target/jreleaser/trace.log
+            target/jreleaser/output.properties
+
+      - name: Set next iteration version
+        run: |
+          sed -i "s|<VersionPrefix>.*</VersionPrefix>|<VersionPrefix>${{ github.event.inputs.nextVersion }}</VersionPrefix>|" Directory.Build.props
+          sed -i 's|<!-- \(.*<VersionSuffix>alpha</VersionSuffix>.*\) -->|\1|' Directory.Build.props
+
+      - name: Commit, push and tag changes
+        run: |
+          git commit -S -m "Setting ALPHA VersionSuffix to ${{ github.event.inputs.nextVersion }}" .
+          git push origin ${{ github.event.inputs.branch }}
+
+      
