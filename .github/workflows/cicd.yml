@@ -24,11 +24,6 @@ env:
 permissions: read-all
 
 jobs:
-  commitlint:
-    name: 📝 Commitlint
-    uses: ./.github/workflows/steps.commitlint.yml
-    secrets: inherit
-      
   version:
     name: Define Version
     uses: ./.github/workflows/steps.dotnet-version.yml
@@ -39,7 +34,6 @@ jobs:
   build_test:
     name: 🔨 Build and test
     needs:
-      - commitlint
       - version
     uses: ./.github/workflows/steps.dotnet-build-test.yml
     with:
@@ -66,7 +60,6 @@ jobs:
   nuget_publish:
     name: 📦 NuGet Publish
     needs:
-      - commitlint
       - build_test
     if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' }}
     uses: ./.github/workflows/steps.dotnet-nuget-publish.yml
@@ -82,7 +75,6 @@ jobs:
       pull-requests: read
     if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' && !needs.version.outputs.preReleaseTag }}
     needs: 
-      - commitlint
       - version
       - nuget_publish
     uses: ./.github/workflows/steps.github-release-draft.yml
