@@ -1,0 +1,26 @@
+project:
+  name: Microcks Testcontainers
+  description: Microcks Testcontainers .NET library
+  longDescription: Microcks Testcontainers .NET library
+  copyright: The Microcks Authors
+
+signing:
+  active: ALWAYS
+  armored: true
+
+files:
+  active: ALWAYS
+  artifacts:
+    - path: './Microcks.Testcontainers-net6.0.spdx-sbom.json'
+    - path: './Microcks.Testcontainers-net8.0.spdx-sbom.json'
+
+release:
+  github:
+    overwrite: true
+    releaseName: '{{tagName}}'
+    tagName: '{{projectVersion}}'
+    changelog:
+      formatted: ALWAYS
+      preset: conventional-commits
+      contributors:
+        format: '- {{contributorName}}{{#contributorUsernameAsLink}} ({{.}}){{/contributorUsernameAsLink}}'
