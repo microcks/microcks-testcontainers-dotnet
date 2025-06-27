@@ -11,9 +11,9 @@
 
 ## Build Status
 
-Latest released version is `0.2.0`.
+Latest released version is `0.3.0`.
 
-Current development version is `0.3.0`.
+Current development version is `0.3.1`.
 
 #### Sonarcloud Quality metrics
 
@@ -49,7 +49,7 @@ To get involved with our community, please make sure you are familiar with the p
 ### Include it into your project dependencies
 
 ```
-dotnet add package Microcks.Testcontainers --version 0.2.0
+dotnet add package Microcks.Testcontainers --version 0.3.0
 ```
 
 ### Startup the container
