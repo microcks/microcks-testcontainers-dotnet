@@ -10,7 +10,7 @@ on:
         required: true
 jobs:
   nuget-publish:
-    if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' && github.repository == 'microcks/microcks-testcontainers-dotnet' }}
+    if: ${{ github.event_name != 'pull_request' && github.repository == 'microcks/microcks-testcontainers-dotnet' }}
     runs-on: ${{ inputs.runs-on }}
     steps:
     - name: 📥 Download artifact
