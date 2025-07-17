@@ -23,6 +23,8 @@
       publish-package:
         description: 'Publish package is enabled ?'
         value: ${{ jobs.build_test.outputs.publish-package }}
+permissions: read-all
+
 jobs:
   build_test:
     runs-on: ${{ inputs.runs-on }}
