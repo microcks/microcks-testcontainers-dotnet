@@ -8,6 +8,8 @@ on:
     secrets:
       NUGET_KEY:
         required: true
+permissions: read-all
+
 jobs:
   nuget-publish:
     if: ${{ github.event_name != 'pull_request' && github.repository == 'microcks/microcks-testcontainers-dotnet' }}

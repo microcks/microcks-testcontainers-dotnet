@@ -12,6 +12,9 @@
 jobs:
   release_drafter:
     if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: write
+      deployments: write
     runs-on: ${{ inputs.runs-on }}
     steps:
     - name: 🔄 Checkout

@@ -24,6 +24,8 @@ permissions: read-all
 jobs:
   version:
     name: Define Version
+    permissions:
+      contents: read
     uses: ./.github/workflows/steps.dotnet-version.yml
     with:
       runs-on: ubuntu-latest
