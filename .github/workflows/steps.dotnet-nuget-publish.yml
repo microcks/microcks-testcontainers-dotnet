@@ -16,7 +16,7 @@ jobs:
     runs-on: ${{ inputs.runs-on }}
     steps:
     - name: 📥 Download artifact
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v5
       with:
         name: nugets_${{ inputs.runs-on }}
         path: nuget_packages
