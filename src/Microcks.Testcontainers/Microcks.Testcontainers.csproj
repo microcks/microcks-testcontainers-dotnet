@@ -6,7 +6,7 @@
     </PropertyGroup>
     <ItemGroup>
 		<PackageReference Include="Testcontainers" Version="4.0.0" />
-        <PackageReference Include="System.Net.Http.Json" Version="8.0.1" />
+        <PackageReference Include="System.Net.Http.Json" Version="9.0.8" />
         <PackageReference Include="Microsoft.Sbom.Targets" Version="4.0.2">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
