@@ -15,7 +15,8 @@
       majorMinorPatch:
         description: 'majorMinorPatch (gitversion)'
         value: ${{ jobs.define_version.outputs.majorMinorPatch }}
-permissions: read-all
+permissions:
+  contents: read
 
 jobs:
   define_version:
