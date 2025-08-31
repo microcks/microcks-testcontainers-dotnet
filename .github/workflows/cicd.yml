@@ -64,20 +64,3 @@ jobs:
     if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' }}
     uses: ./.github/workflows/steps.dotnet-nuget-publish.yml
     secrets: inherit
-
-  release_drafter:
-    name: 📖 Draft Release
-    permissions:
-      # write permission is required to create a github release
-      contents: write
-      # write permission is required for autolabeler
-      # otherwise, read permission is required at least
-      pull-requests: read
-    if: ${{ needs.build_test.outputs.publish-package != false && github.actor != 'dependabot[bot]' && !needs.version.outputs.preReleaseTag }}
-    needs: 
-      - version
-      - nuget_publish
-    uses: ./.github/workflows/steps.github-release-draft.yml
-    with:
-      version: ${{ needs.version.outputs.version }}
-    secrets: inherit
