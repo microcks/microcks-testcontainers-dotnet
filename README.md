@@ -232,7 +232,7 @@ The list of supported features is the following:
 -   Mocking and contract-testing of GraphQL APIs,
 -   Mocking and contract-testing of gRPC APIs.
 
-To support features like Asynchronous contract-testing, we introduced `MicrocksContainersEnsemble` that allows managing
+To support features like Asynchronous API and `POSTMAN`contract-testing, we introduced `MicrocksContainersEnsemble` that allows managing
 additional Microcks services. `MicrocksContainersEnsemble` allow you to implement
 [Different levels of API contract testing](https://medium.com/@lbroudoux/different-levels-of-api-contract-testing-with-microcks-ccc0847f8c97)
 in the Inner Loop with Testcontainers!
@@ -242,7 +242,8 @@ You can create and build an ensemble that way:
 
 ```csharp
 MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, MicrocksImage)
-    .WithMainArtifacts("pastry-orders-asyncapi.yml");
+    .WithMainArtifacts("apipastries-openapi.yaml")
+    .WithSecondaryArtifacts("apipastries-postman-collection.json");
 
 await ensemble.StartAsync();
 ```
@@ -263,6 +264,29 @@ MicrocksContainersEnsemble ensemble = new MicrocksContainerEnsemble(network, Mic
     .WithAsyncFeature();
 
 await ensemble.StartAsync();
+```
+
+#### Postman contract-testing
+
+On this `ensemble` you may want to enable additional features such as Postman contract-testing:
+
+```csharp
+ensemble.WithPostman();
+await ensemble.StartAsync();
+```
+
+You can execute a `POSTMAN` test using an ensemble that way:
+
+```csharp
+var testRequest = new TestRequest
+{
+    ServiceId = "API Pastries:0.0.1",
+    RunnerType = TestRunnerType.POSTMAN,
+    TestEndpoint = "http://good-impl:3003",
+    Timeout = TimeSpan.FromSeconds(3)
+};
+
+TestResult testResult = await _ensemble.MicrocksContainer.TestEndpointAsync(testRequest);
 ```
 
 #### Asynchronous API support
