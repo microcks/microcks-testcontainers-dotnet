@@ -30,7 +30,13 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
 {
     private readonly MicrocksBuilder _microcksBuilder;
 
+    private ContainerBuilder _postmanBuilder;
     private MicrocksAsyncMinionBuilder _asyncMinionBuilder;
+
+    /// <summary>
+    /// Gets the Postman runtime container.
+    /// </summary>
+    public IContainer PostmanContainer { get; private set; }
 
     /// <summary>
     /// Gets the Microcks asynchronous minion container.
@@ -75,6 +81,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
             .WithExposedPort(MicrocksBuilder.MicrocksGrpcPort)
             .WithImage(this._microcksImage)
             .WithEnvironment(MacOSHelper.GetJavaOptions())
+            .WithEnvironment("POSTMAN_RUNNER_URL", "http://postman:3000")
             .WithEnvironment("TEST_CALLBACK_URL", "http://microcks:" + MicrocksBuilder.MicrocksHttpPort)
             .WithEnvironment("ASYNC_MINION_URL", "http://microcks-async-minion:" + MicrocksAsyncMinionBuilder.MicrocksAsyncMinionHttpPort);
     }
@@ -105,6 +112,30 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     public MicrocksContainerEnsemble WithSnapshots(params string[] snapshots)
     {
         this._microcksBuilder.WithSnapshots(snapshots);
+        return this;
+    }
+
+    /// <summary>
+    /// Configures the Microcks container ensemble to include a Postman runtime container.
+    /// </summary>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns
+    public MicrocksContainerEnsemble WithPostman()
+    {
+        return this.WithPostman("quay.io/microcks/microcks-postman-runtime:latest");
+    }
+
+    /// <summary>
+    /// Configures the Microcks container ensemble to include a Postman runtime container with the specified image
+    /// </summary>
+    /// <param name="image">The Postman runtime image to be used.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
+    public MicrocksContainerEnsemble WithPostman(string image)
+    {
+        this._postmanBuilder = new ContainerBuilder()
+            .WithImage(image)
+            .WithNetwork(this._network)
+            .WithNetworkAliases("postman")
+            .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*postman-runtime wrapper listening on port.*"));
         return this;
     }
 
@@ -179,6 +210,13 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         this.MicrocksContainer = this._microcksBuilder.Build();
         await this.MicrocksContainer.StartAsync();
 
+        if (this._postmanBuilder != null)
+        {
+            this.PostmanContainer = this._postmanBuilder
+                .Build();
+
+            await this.PostmanContainer.StartAsync();
+        }
         if (this._asyncMinionBuilder != null)
         {
             this.AsyncMinionContainer = this._asyncMinionBuilder
@@ -194,6 +232,10 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>A task that represents the asynchronous dispose operation.</returns>
     public async ValueTask DisposeAsync()
     {
+        if (this.PostmanContainer != null)
+        {
+            await this.PostmanContainer.DisposeAsync();
+        }
         if (this.AsyncMinionContainer != null)
         {
             await this.AsyncMinionContainer.DisposeAsync();
