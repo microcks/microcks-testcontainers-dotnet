@@ -24,7 +24,7 @@ updates:
       coverlet.collector:
         patterns: ['coverlet.collector']
       testcontainers:
-        patterns: ['Testcontainers*']
+        patterns: [ 'Testcontainers', 'Testcontainers.*']
       microsoft:
         patterns: [Microsoft.*, System.*]
       xunit:
