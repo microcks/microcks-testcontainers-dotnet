@@ -22,14 +22,17 @@ using System.Net;
 using System.Text.Json;
 using Microcks.Testcontainers.Model;
 using RestAssured.Logging;
+using RestAssured.Response;
 using Xunit.Internal;
+using Microsoft.AspNetCore.Mvc;
 
 namespace Microcks.Testcontainers.Tests;
 
 public sealed class MicrocksSecretCreationTests : IAsyncLifetime
 {
     private readonly MicrocksContainer _microcksContainer = new MicrocksBuilder()
-      .WithSecret(new SecretBuilder().WithName("my-secret").WithToken("abc-123-xyz").Build())
+      .WithSecrets(new SecretBuilder().WithName("my-secret").WithToken("abc-123-xyz").WithTokenHeader("x-microcks").Build())
+      .WithMainRemoteArtifacts(new RemoteArtifact("https://raw.githubusercontent.com/microcks/microcks/master/samples/APIPastry-openapi.yaml", "my-secret"))
       .Build();
 
     public async ValueTask DisposeAsync()
@@ -55,11 +58,42 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
           .Body("$[0].name", Is.EqualTo("my-secret"))
           .And()
           .Body("$[0].token", Is.EqualTo("abc-123-xyz"))
+          .And()
+          .Body("$[0].tokenHeader", Is.EqualTo("x-microcks"))
           .Extract()
           .Response().Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
         var document = JsonDocument.Parse(result);
         Assert.Equal(1, document.RootElement.GetArrayLength());
+    }
+
+    [Fact]
+    public async Task ShouldLoadRemoteArtifactUsingSecret()
+    {
+        var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
+        {
+          Path = "/api/services"
+        };
+
+        var verifiableResponse = Given()
+          .Log(new LogConfiguration { RequestLogLevel = RequestLogLevel.All })
+          .When()
+          .Get(uriBuilder.ToString())
+          .Then()
+          .StatusCode(HttpStatusCode.OK);
+
+        // newtonsoft json jsonpath $.length is not supported
+        var services = await verifiableResponse
+          .Extract()
+          .Response().Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+
+        var document = JsonDocument.Parse(services);
+        Assert.Equal(1, document.RootElement.GetArrayLength());
+
+        verifiableResponse.Body("$[0:].name", Has.Items(
+          Is.EqualTo("API Pastry - 2.0")
+          ),
+        VerifyAs.Json);
     }
 
     [Fact]
