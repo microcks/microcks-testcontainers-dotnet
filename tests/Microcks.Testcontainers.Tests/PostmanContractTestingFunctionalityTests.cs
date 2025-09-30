@@ -60,9 +60,9 @@ public sealed class PostmanContractTestingFunctionalityTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _ensemble.StartAsync();
-        await _badImpl.StartAsync();
-        await _goodImpl.StartAsync();
+        await _ensemble.StartAsync(TestContext.Current.CancellationToken);
+        await _badImpl.StartAsync(TestContext.Current.CancellationToken);
+        await _goodImpl.StartAsync(TestContext.Current.CancellationToken);
     }
 
     public async ValueTask DisposeAsync()
@@ -84,7 +84,7 @@ public sealed class PostmanContractTestingFunctionalityTests : IAsyncLifetime
         };
 
         // Test should fail with validation failure messages.
-        TestResult badTestResult = await _ensemble.MicrocksContainer.TestEndpointAsync(testRequest);
+        TestResult badTestResult = await _ensemble.MicrocksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         Assert.False(badTestResult.Success);
         Assert.Equal("http://bad-impl:3002", badTestResult.TestedEndpoint);
         Assert.Equal(3, badTestResult.TestCaseResults.Count);
@@ -108,7 +108,7 @@ public sealed class PostmanContractTestingFunctionalityTests : IAsyncLifetime
         };
 
         // Test should succeed with no validation failure messages.
-        TestResult goodTestResult = await _ensemble.MicrocksContainer.TestEndpointAsync(testRequest);
+        TestResult goodTestResult = await _ensemble.MicrocksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         Assert.True(goodTestResult.Success);
         Assert.Equal("http://good-impl:3003", goodTestResult.TestedEndpoint);
         Assert.Equal(3, goodTestResult.TestCaseResults.Count);

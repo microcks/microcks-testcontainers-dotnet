@@ -34,6 +34,7 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
+        var cancellationToken = TestContext.Current.CancellationToken;
         _network = new NetworkBuilder().Build();
         _rabbitMqContainer = new RabbitMqBuilder()
             .WithImage("rabbitmq:3.13-management-alpine")
@@ -41,16 +42,16 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
             .WithNetworkAliases("rabbitmq")
             .Build();
 
-        await _rabbitMqContainer.StartAsync()
+        await _rabbitMqContainer.StartAsync(cancellationToken)
             .ConfigureAwait(false);
-        await _rabbitMqContainer.ExecAsync(["rabbitmqctl", "add_user", "test", "test"]);
-        await _rabbitMqContainer.ExecAsync(["rabbitmqctl", "set_permissions", "-p", "/", "test", ".*", ".*", ".*"]);
+        await _rabbitMqContainer.ExecAsync(["rabbitmqctl", "add_user", "test", "test"], cancellationToken);
+        await _rabbitMqContainer.ExecAsync(["rabbitmqctl", "set_permissions", "-p", "/", "test", ".*", ".*", ".*"], cancellationToken);
 
         _ensemble = new MicrocksContainerEnsemble(_network, "quay.io/microcks/microcks-uber")
             .WithMainArtifacts("pastry-orders-asyncapi.yml")
             .WithAsyncFeature()
             .WithAmqpConnection(new GenericConnection("rabbitmq:5672", "test", "test"));
-        await _ensemble.StartAsync();
+        await _ensemble.StartAsync(cancellationToken);
     }
 
     public async ValueTask DisposeAsync()

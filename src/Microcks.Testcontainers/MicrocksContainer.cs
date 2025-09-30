@@ -15,6 +15,7 @@
 //
 //
 
+using System.Threading;
 using System.Threading.Tasks;
 namespace Microcks.Testcontainers;
 
@@ -99,7 +100,7 @@ public sealed class MicrocksContainer : DockerContainer
     /// <summary>
     /// Import a main artifact into the Microcks container after it has started.
     /// </summary>
-    /// <param name="artifact"></param>
+    /// <param name="artifact">Path to the artifact file</param>
     public void ImportAsMainArtifact(string artifact)
     {
         this.ImportArtifactAsync(artifact, true).GetAwaiter().GetResult();
@@ -108,7 +109,7 @@ public sealed class MicrocksContainer : DockerContainer
     /// <summary>
     /// Import a secondary artifact into the Microcks container after it has started.
     /// </summary>
-    /// <param name="artifact"></param>
+    /// <param name="artifact">Path to the artifact file</param>
     public void ImportAsSecondaryArtifact(string artifact)
     {
         this.ImportArtifactAsync(artifact, false).GetAwaiter().GetResult();

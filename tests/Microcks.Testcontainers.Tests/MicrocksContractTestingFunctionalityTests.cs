@@ -106,14 +106,14 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
         };
 
         // First test should fail with validation failure messages.
-        TestResult badTestResult = await _microcksContainer.TestEndpointAsync(badTestRequest);
+        TestResult badTestResult = await _microcksContainer.TestEndpointAsync(badTestRequest, TestContext.Current.CancellationToken);
         Assert.False(badTestResult.Success);
         Assert.Equal("http://bad-impl:3001", badTestResult.TestedEndpoint);
         Assert.Equal(3, badTestResult.TestCaseResults.Count);
         Assert.Contains("string found, number expected", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
 
         // Retrieve messages for the failing test case.
-        List<RequestResponsePair> messages = await _microcksContainer.GetMessagesForTestCaseAsync(badTestResult, "GET /pastries");
+        List<RequestResponsePair> messages = await _microcksContainer.GetMessagesForTestCaseAsync(badTestResult, "GET /pastries", TestContext.Current.CancellationToken);
         Assert.Equal(3, messages.Count);
         Assert.All(messages, message =>
         {
@@ -134,7 +134,8 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
             TestEndpoint = "http://good-impl:3002",
             Timeout = TimeSpan.FromMilliseconds(2000)
         };
-        TestResult goodTestResult = await _microcksContainer.TestEndpointAsync(goodTestRequest);
+        TestResult goodTestResult = await _microcksContainer.TestEndpointAsync(goodTestRequest, TestContext.Current.CancellationToken
+        );
         Assert.True(goodTestResult.Success);
         Assert.Equal("http://good-impl:3002", goodTestResult.TestedEndpoint);
         Assert.Equal(3, goodTestResult.TestCaseResults.Count);
@@ -162,7 +163,7 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
       }
         };
 
-        TestResult goodTestResultWithHeader = await _microcksContainer.TestEndpointAsync(goodTestRequestWithHeader);
+        TestResult goodTestResultWithHeader = await _microcksContainer.TestEndpointAsync(goodTestRequestWithHeader, TestContext.Current.CancellationToken);
         Assert.True(goodTestResultWithHeader.Success);
         Assert.Equal("http://good-impl:3002", goodTestResultWithHeader.TestedEndpoint);
         Assert.Equal(3, goodTestResultWithHeader.TestCaseResults.Count);

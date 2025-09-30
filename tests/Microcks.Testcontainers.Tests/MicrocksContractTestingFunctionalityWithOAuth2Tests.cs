@@ -73,10 +73,10 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
         _microcksContainer.Started +=
             (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
 
-        await _network.CreateAsync();
-        await _microcksContainer.StartAsync();
-        await _keycloak.StartAsync();
-        await _goodImpl.StartAsync();
+        await _network.CreateAsync(TestContext.Current.CancellationToken);
+        await _microcksContainer.StartAsync(TestContext.Current.CancellationToken);
+        await _keycloak.StartAsync(TestContext.Current.CancellationToken);
+        await _goodImpl.StartAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
@@ -112,7 +112,7 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
                 .Build()
         };
 
-        TestResult testResult = await _microcksContainer.TestEndpointAsync(testRequest);
+        TestResult testResult = await _microcksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         Assert.True(testResult.Success);
         Assert.Equal("http://good-impl:3002", testResult.TestedEndpoint);
         Assert.Equal(3, testResult.TestCaseResults.Count);

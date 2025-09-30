@@ -41,7 +41,7 @@ public sealed class MicrocksEnsembleArtifactsTest : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _ensemble.StartAsync();
+        await _ensemble.StartAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]

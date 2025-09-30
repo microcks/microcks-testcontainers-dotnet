@@ -81,9 +81,9 @@ public class MicrocksAsyncFeatureFixture : IAsyncLifetime
             )
             .Build();
 
-        await this.MicrocksContainerEnsemble.StartAsync();
-        await this.WsBadImplContainer.StartAsync();
-        await this.WsGoodImplContainer.StartAsync();
+        await this.MicrocksContainerEnsemble.StartAsync(TestContext.Current.CancellationToken);
+        await this.WsBadImplContainer.StartAsync(TestContext.Current.CancellationToken);
+        await this.WsGoodImplContainer.StartAsync(TestContext.Current.CancellationToken);
     }
 
 }

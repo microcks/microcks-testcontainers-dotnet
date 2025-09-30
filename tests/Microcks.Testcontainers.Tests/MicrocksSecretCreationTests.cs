@@ -42,7 +42,7 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
 
     public async ValueTask InitializeAsync()
     {
-        await _microcksContainer.StartAsync();
+        await _microcksContainer.StartAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
