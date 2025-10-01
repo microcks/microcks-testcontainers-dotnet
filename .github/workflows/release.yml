@@ -61,9 +61,7 @@ jobs:
         run: |
           curl -Lo $RUNNER_TEMP/sbom-tool https://github.com/microsoft/sbom-tool/releases/latest/download/sbom-tool-linux-x64
           chmod +x $RUNNER_TEMP/sbom-tool
-          $RUNNER_TEMP/sbom-tool generate -b ./src/Microcks.Testcontainers/obj/Release/net6.0 -bc . -pn Microcks.Testcontainers -pv ${{ github.event.inputs.version }} -ps Microcks -nsb https://microcks.io
           $RUNNER_TEMP/sbom-tool generate -b ./src/Microcks.Testcontainers/obj/Release/net8.0 -bc . -pn Microcks.Testcontainers -pv ${{ github.event.inputs.version }} -ps Microcks -nsb https://microcks.io
-          cp ./src/Microcks.Testcontainers/obj/Release/net6.0/_manifest/spdx_2.2/manifest.spdx.json ./Microcks.Testcontainers-net6.0.spdx-sbom.json
           cp ./src/Microcks.Testcontainers/obj/Release/net8.0/_manifest/spdx_2.2/manifest.spdx.json ./Microcks.Testcontainers-net8.0.spdx-sbom.json
 
       - name: Publish release with JReleaser
