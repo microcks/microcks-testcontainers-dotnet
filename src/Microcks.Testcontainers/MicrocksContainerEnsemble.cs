@@ -103,9 +103,21 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         return this;
     }
 
+    public MicrocksContainerEnsemble WithMainRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    {
+        this._microcksBuilder.WithMainRemoteArtifacts(remoteArtifacts);
+        return this;
+    }
+
     public MicrocksContainerEnsemble WithSecondaryArtifacts(params string[] secondaryArtifacts)
     {
         this._microcksBuilder.WithSecondaryArtifacts(secondaryArtifacts);
+        return this;
+    }
+
+    public MicrocksContainerEnsemble WithSecondaryRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    {
+        this._microcksBuilder.WithSecondaryRemoteArtifacts(remoteArtifacts);
         return this;
     }
 
@@ -115,10 +127,16 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         return this;
     }
 
+    public MicrocksContainerEnsemble WithSecrets(params Model.Secret[] secrets)
+    {
+        this._microcksBuilder.WithSecrets(secrets);
+        return this;
+    }
+
     /// <summary>
     /// Configures the Microcks container ensemble to include a Postman runtime container.
     /// </summary>
-    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithPostman()
     {
         return this.WithPostman("quay.io/microcks/microcks-postman-runtime:latest");

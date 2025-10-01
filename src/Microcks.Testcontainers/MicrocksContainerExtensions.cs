@@ -172,9 +172,13 @@ public static class MicrocksContainerExtensions
         container.Logger.LogInformation($"Secret {secret.Name} has been created");
     }
 
-    internal static async Task DownloadArtifactAsync(this MicrocksContainer container, string remoteArtifactUrl, bool main)
+    internal static async Task DownloadArtifactAsync(this MicrocksContainer container, RemoteArtifact remoteArtifact, bool main)
     {
-        var content = new StringContent("mainArtifact=" + main + "&url=" + remoteArtifactUrl, Encoding.UTF8, "application/x-www-form-urlencoded");
+        var content = new StringContent("mainArtifact=" + main + "&url=" + remoteArtifact.Url, Encoding.UTF8, "application/x-www-form-urlencoded");
+        if (remoteArtifact.SecretName != null)
+        {
+            content = new StringContent("mainArtifact=" + main + "&url=" + remoteArtifact.Url + "&secretName=" + remoteArtifact.SecretName, Encoding.UTF8, "application/x-www-form-urlencoded");
+        }
         var result = await Client
             .PostAsync($"{container.GetHttpEndpoint()}api/artifact/download", content);
 
@@ -182,7 +186,7 @@ public static class MicrocksContainerExtensions
         {
             throw new Exception("Artifact has not been correctly downloaded");
         }
-        container.Logger.LogInformation($"Artifact {remoteArtifactUrl} has been downloaded");
+        container.Logger.LogInformation($"Artifact {remoteArtifact.Url} has been downloaded");
     }
 
     /// <summary>

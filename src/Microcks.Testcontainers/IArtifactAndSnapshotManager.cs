@@ -18,27 +18,37 @@
 namespace Microcks.Testcontainers;
 
 /// <summary>
-/// Interface pour la gestion des artifacts et snapshots dans une approche fluide.
+/// Artifacts management interface for fluent approach.
 /// </summary>
 public interface IArtifactAndSnapshotManager<T>
 {
     /// <summary>
-    /// Ajoute des artifacts principaux.
+    /// Add main/primary artifacts.
     /// </summary>
     T WithMainArtifacts(params string[] mainArtifacts);
 
     /// <summary>
-    /// Ajoute des artifacts principaux distants.
+    /// Add main/primary remote artifacts.
     /// </summary>
     T WithMainRemoteArtifacts(params string[] mainRemoteArtifacts);
 
     /// <summary>
-    /// Ajoute des artifacts secondaires.
+    /// Add main/primary remote artifacts with a complete full definition of remote artifact.
+    /// </summary>
+    T WithMainRemoteArtifacts(params RemoteArtifact[] mainRemoteArtifacts);
+
+    /// <summary>
+    /// Add secondary artifacts.
     /// </summary>
     T WithSecondaryArtifacts(params string[] secondaryArtifacts);
 
     /// <summary>
-    /// Ajoute des snapshots.
+    /// Add secondary artifacts with a complete full definition of remote artifact.
+    /// </summary>
+    T WithSecondaryRemoteArtifacts(params RemoteArtifact[] secondaryRemoteArtifacts);
+
+    /// <summary>
+    /// Add snapshots.
     /// </summary>
     T WithSnapshots(params string[] snapshots);
 }

@@ -40,9 +40,10 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
 
     private List<string> _snapshots;
 
-    private List<string> _mainRemoteArtifacts;
     private List<string> _mainArtifacts;
     private List<string> _secondaryArtifacts;
+    private List<RemoteArtifact> _mainRemoteArtifacts;
+    private List<RemoteArtifact> _secondaryRemoteArtifacts;
 
     private List<Model.Secret> _secrets;
 
@@ -81,15 +82,26 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
 
     private void ContainerStarted(MicrocksContainer container)
     {
+        // Load snapshots before anything else.
         if (_snapshots != null && _snapshots.Any())
         {
             _snapshots.ForEach(snapshot => container.ImportSnapshotAsync(snapshot).GetAwaiter().GetResult());
         }
-
+        // Load secrets before remote artifacts as they may be needed for authentication.
+        if (_secrets != null && _secrets.Any())
+        {
+            _secrets.ForEach(secret => container.CreateSecretAsync(secret).GetAwaiter().GetResult());
+        }
+        // Load remote artifacts before local ones.
         if (_mainRemoteArtifacts != null && _mainRemoteArtifacts.Any())
         {
-            _mainRemoteArtifacts.ForEach(remoteArtifactUrl =>
-                container.DownloadArtifactAsync(remoteArtifactUrl, main: true).GetAwaiter().GetResult());
+            _mainRemoteArtifacts.ForEach(remoteArtifact =>
+                container.DownloadArtifactAsync(remoteArtifact, main: true).GetAwaiter().GetResult());
+        }
+        if (_secondaryRemoteArtifacts != null && _secondaryRemoteArtifacts.Any())
+        {
+            _secondaryRemoteArtifacts.ForEach(remoteArtifact =>
+                container.DownloadArtifactAsync(remoteArtifact, main: false).GetAwaiter().GetResult());
         }
 
         if (_mainArtifacts != null && _mainArtifacts.Any())
@@ -100,11 +112,6 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         if (_secondaryArtifacts != null && _secondaryArtifacts.Any())
         {
             _secondaryArtifacts.ForEach(container.ImportAsSecondaryArtifact);
-        }
-
-        if (_secrets != null && _secrets.Any())
-        {
-            _secrets.ForEach(secret => container.CreateSecretAsync(secret).GetAwaiter().GetResult());
         }
     }
 
@@ -160,19 +167,32 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <summary>
     /// Set the main remote artifacts to download into the Microcks container.
     /// </summary>
+    /// <param name="remoteArtifacts"></param>
+    /// <returns></returns>
+    public MicrocksBuilder WithMainRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    {
+        if (_mainRemoteArtifacts == null)
+        {
+            _mainRemoteArtifacts = new List<RemoteArtifact>(remoteArtifacts.Length);
+        }
+        _mainRemoteArtifacts.AddRange(remoteArtifacts);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Set the main remote artifacts to download into the Microcks container.
+    /// </summary>
     /// <param name="urls"></param>
     /// <returns></returns>
     public MicrocksBuilder WithMainRemoteArtifacts(params string[] urls)
     {
         if (_mainRemoteArtifacts == null)
         {
-            _mainRemoteArtifacts = new List<string>(urls);
+            _mainRemoteArtifacts = new List<RemoteArtifact>(urls.Length);
         }
-        else
-        {
-            _mainRemoteArtifacts.AddRange(urls);
-        }
-
+        _mainRemoteArtifacts.AddRange(urls.Select(url => new RemoteArtifact(url, null)));
+        
         return this;
     }
 
@@ -191,6 +211,22 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         {
             _mainArtifacts.AddRange(mainArtifacts);
         }
+
+        return this;
+    }
+
+    /// <summary>
+    /// Set the secondary remote artifacts to download into the Microcks container.
+    /// </summary>
+    /// <param name="remoteArtifacts"></param>
+    /// <returns></returns>
+    public MicrocksBuilder WithSecondaryRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    {
+        if (_secondaryRemoteArtifacts == null)
+        {
+            _secondaryRemoteArtifacts = new List<RemoteArtifact>(remoteArtifacts.Length);
+        }
+        _secondaryRemoteArtifacts.AddRange(remoteArtifacts);
 
         return this;
     }
@@ -219,7 +255,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// </summary>
     /// <param name="secrets"></param>
     /// <returns></returns>
-    public MicrocksBuilder WithSecret(params Model.Secret[] secrets)
+    public MicrocksBuilder WithSecrets(params Model.Secret[] secrets)
     {
         if (_secrets == null)
         {
