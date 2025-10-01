@@ -44,7 +44,7 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
 
   public async ValueTask InitializeAsync()
   {
-    await _microcksContainer.StartAsync();
+    await _microcksContainer.StartAsync(TestContext.Current.CancellationToken);
   }
 
   [Fact]
@@ -118,8 +118,8 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
   {
     var pastries = _microcksContainer.GetRestMockEndpoint("API Pastries", "0.0.1");
 
-    Assert.False(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1"));
-    Assert.Equal(0, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1"));
+    Assert.False(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+    Assert.Equal(0, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
 
     Given()
       .When()
@@ -128,8 +128,8 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
       .StatusCode(HttpStatusCode.OK)
       .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
 
-    Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1"));
-    Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1"));
+    Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+    Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
 
     // Vérifier que le mock de l'API Pastry est bien disponible
     Given()
@@ -139,8 +139,8 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
       .StatusCode(HttpStatusCode.OK)
       .Body("$.name", IsEqualMatcher<string>.EqualTo("Eclair Chocolat"));
 
-    Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1"));
-    Assert.Equal(2, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1"));
+    Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+    Assert.Equal(2, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
 
     // Switch to the other version of the API Pastry
     var baseApiUrl = _microcksContainer.GetRestMockEndpoint("API Pastry - 2.0", "2.0.0");
@@ -152,8 +152,8 @@ public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
       .StatusCode(HttpStatusCode.OK)
       .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
 
-    Assert.True(await _microcksContainer.VerifyAsync("API Pastry - 2.0", "2.0.0"));
-    Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastry - 2.0", "2.0.0"));
+    Assert.True(await _microcksContainer.VerifyAsync("API Pastry - 2.0", "2.0.0", cancellationToken: TestContext.Current.CancellationToken));
+    Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastry - 2.0", "2.0.0", cancellationToken: TestContext.Current.CancellationToken));
   }
 
 }

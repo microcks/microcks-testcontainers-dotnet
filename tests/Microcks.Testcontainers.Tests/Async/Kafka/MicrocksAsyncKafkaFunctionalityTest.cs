@@ -147,7 +147,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
 
         var taskTestResult = this._microcksContainerEnsemble
             .MicrocksContainer
-            .TestEndpointAsync(testRequest);
+            .TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
 
         await Task.Delay(750, TestContext.Current.CancellationToken);
 
@@ -217,7 +217,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
 
         var taskTestResult = this._microcksContainerEnsemble
             .MicrocksContainer
-            .TestEndpointAsync(testRequest);
+            .TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         await Task.Delay(750, TestContext.Current.CancellationToken);
 
         // Act
@@ -250,7 +250,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
 
         // Retrieve event messages for the failing test case.
         var events = await _microcksContainerEnsemble.MicrocksContainer
-            .GetEventMessagesForTestCaseAsync(testResult, "SUBSCRIBE pastry/orders");
+            .GetEventMessagesForTestCaseAsync(testResult, "SUBSCRIBE pastry/orders", TestContext.Current.CancellationToken);
         // We should have at least 4 events.
         Assert.True(events.Count >= 4);
 

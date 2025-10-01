@@ -56,19 +56,20 @@ public static class MicrocksContainerExtensions
     /// </summary>
     /// <param name="container">The Microcks container to test against.</param>
     /// <param name="testRequest">The TestRequest containing the details of the test to be performed.</param>
+    /// <param name="cancellationToken">A CancellationToken to observe while waiting for the task to complete.</param>
     /// <returns>A Task representing the asynchronous operation, with a TestResult as the result.</returns>
     /// <exception cref="Exception">Thrown if the test could not be launched
     /// or if there was an error during the test execution.</exception>
     public static async Task<TestResult> TestEndpointAsync(
-        this MicrocksContainer container, TestRequest testRequest)
+        this MicrocksContainer container, TestRequest testRequest, CancellationToken cancellationToken = default)
     {
         string httpEndpoint = container.GetHttpEndpoint() + "api/tests";
         var content = new StringContent(JsonSerializer.Serialize(testRequest), Encoding.UTF8, "application/json");
-        var responseMessage = await Client.PostAsync(httpEndpoint, content);
+        var responseMessage = await Client.PostAsync(httpEndpoint, content, cancellationToken);
 
         if (responseMessage.StatusCode == HttpStatusCode.Created)
         {
-            var responseContent = await responseMessage.Content.ReadAsStringAsync();
+            var responseContent = await responseMessage.Content.ReadAsStringAsync(cancellationToken);
 
             var testResult = JsonSerializer.Deserialize<TestResult>(responseContent);
             var testResultId = testResult.Id;
@@ -76,10 +77,11 @@ public static class MicrocksContainerExtensions
 
             try
             {
-                await WaitForConditionAsync(async () => !(await RefreshTestResultAsync(httpEndpoint, testResultId)).InProgress,
+                await WaitForConditionAsync(async () => !(await RefreshTestResultAsync(httpEndpoint, testResultId, cancellationToken)).InProgress,
                     atMost: TimeSpan.FromMilliseconds(1000).Add(testRequest.Timeout),
                     delay: TimeSpan.FromMilliseconds(100),
-                    interval: TimeSpan.FromMilliseconds(200));
+                    interval: TimeSpan.FromMilliseconds(200),
+                    cancellationToken);
             }
             catch (TaskCanceledException taskCanceledException)
             {
@@ -88,7 +90,7 @@ public static class MicrocksContainerExtensions
                     "Test timeout reached, stopping polling for test {testEndpoint}", testRequest.TestEndpoint);
             }
 
-            return await RefreshTestResultAsync(httpEndpoint, testResultId);
+            return await RefreshTestResultAsync(httpEndpoint, testResultId, cancellationToken);
         }
         else
         {
@@ -96,21 +98,25 @@ public static class MicrocksContainerExtensions
         }
     }
 
-    private static async Task<TestResult> RefreshTestResultAsync(string httpEndpoint, string testResultId)
+    private static async Task<TestResult> RefreshTestResultAsync(string httpEndpoint, string testResultId, CancellationToken cancellationToken = default)
     {
-        var result = await Client.GetAsync(httpEndpoint + "/" + testResultId);
-        var jsonResult = await result.Content.ReadAsStringAsync();
+        var refreshTestResultEndpoint = $"{httpEndpoint}/{testResultId}";
+        var result = await Client.GetAsync(refreshTestResultEndpoint, cancellationToken);
+        var jsonResult = await result.Content.ReadAsStringAsync(cancellationToken);
         var testResult = JsonSerializer.Deserialize<TestResult>(jsonResult);
         return testResult;
     }
 
-    private static async Task WaitForConditionAsync(Func<Task<bool>> condition, TimeSpan atMost, TimeSpan delay, TimeSpan interval)
+    private static async Task WaitForConditionAsync(Func<Task<bool>> condition, TimeSpan atMost, TimeSpan delay, TimeSpan interval, CancellationToken cancellationToken = default)
     {
         // Delay before first check
-        await Task.Delay(delay);
+        await Task.Delay(delay, cancellationToken);
 
         // Cancel after atMost
-        using var cancellationTokenSource = new CancellationTokenSource(atMost);
+        using var atMostCancellationToken = new CancellationTokenSource(atMost);
+        // Create linked token so we can be cancelled either by caller or by timeout
+        using var cancellationTokenSource = CancellationTokenSource
+            .CreateLinkedTokenSource(cancellationToken, atMostCancellationToken.Token);
 
         // Polling
         while (!await condition())
@@ -119,14 +125,14 @@ public static class MicrocksContainerExtensions
             {
                 throw new TaskCanceledException();
             }
-            await Task.Delay(interval, CancellationToken.None);
+            await Task.Delay(interval, cancellationTokenSource.Token);
         }
     }
 
-    internal static async Task ImportArtifactAsync(this MicrocksContainer container, string artifact, bool mainArtifact)
+    internal static async Task ImportArtifactAsync(this MicrocksContainer container, string artifact, bool mainArtifact, CancellationToken cancellationToken = default)
     {
         string url = $"{container.GetHttpEndpoint()}api/artifact/upload" + (mainArtifact ? "" : "?mainArtifact=false");
-        var result = await container.UploadFileToMicrocksAsync(artifact, url);
+        var result = await container.UploadFileToMicrocksAsync(artifact, url, cancellationToken);
         if (result.StatusCode != HttpStatusCode.Created)
         {
             throw new Exception($"Artifact has not been correctly imported: {result.StatusCode}");
@@ -134,7 +140,7 @@ public static class MicrocksContainerExtensions
         container.Logger.LogInformation($"Artifact {artifact} has been imported");
     }
 
-    internal static async Task<HttpResponseMessage> UploadFileToMicrocksAsync(this MicrocksContainer container, string filepath, string url)
+    internal static async Task<HttpResponseMessage> UploadFileToMicrocksAsync(this MicrocksContainer container, string filepath, string url, CancellationToken cancellationToken = default)
     {
         using (var form = new MultipartFormDataContent())
         {
@@ -142,14 +148,14 @@ public static class MicrocksContainerExtensions
             snapContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
             form.Add(snapContent, "file", Path.GetFileName(filepath));
 
-            return await Client.PostAsync(url, form);
+            return await Client.PostAsync(url, form, cancellationToken);
         }
     }
 
-    internal static async Task ImportSnapshotAsync(this MicrocksContainer container, string snapshot)
+    internal static async Task ImportSnapshotAsync(this MicrocksContainer container, string snapshot, CancellationToken cancellationToken = default)
     {
         string url = $"{container.GetHttpEndpoint()}api/import";
-        var result = await container.UploadFileToMicrocksAsync(snapshot, url);
+        var result = await container.UploadFileToMicrocksAsync(snapshot, url, cancellationToken);
 
         if (result.StatusCode != HttpStatusCode.Created)
         {
@@ -158,12 +164,12 @@ public static class MicrocksContainerExtensions
         container.Logger.LogInformation($"Snapshot {snapshot} has been imported");
     }
 
-    internal static async Task CreateSecretAsync(this MicrocksContainer container, Model.Secret secret)
+    internal static async Task CreateSecretAsync(this MicrocksContainer container, Model.Secret secret, CancellationToken cancellationToken = default)
     {
         string url = $"{container.GetHttpEndpoint()}api/secrets";
         var content = new StringContent(JsonSerializer.Serialize(secret), Encoding.UTF8, "application/json");
 
-        var result = await Client.PostAsync(url, content);
+        var result = await Client.PostAsync(url, content, cancellationToken);
 
         if (result.StatusCode != HttpStatusCode.Created)
         {
@@ -172,7 +178,7 @@ public static class MicrocksContainerExtensions
         container.Logger.LogInformation($"Secret {secret.Name} has been created");
     }
 
-    internal static async Task DownloadArtifactAsync(this MicrocksContainer container, RemoteArtifact remoteArtifact, bool main)
+    internal static async Task DownloadArtifactAsync(this MicrocksContainer container, RemoteArtifact remoteArtifact, bool main, CancellationToken cancellationToken = default)
     {
         var content = new StringContent("mainArtifact=" + main + "&url=" + remoteArtifact.Url, Encoding.UTF8, "application/x-www-form-urlencoded");
         if (remoteArtifact.SecretName != null)
@@ -180,7 +186,7 @@ public static class MicrocksContainerExtensions
             content = new StringContent("mainArtifact=" + main + "&url=" + remoteArtifact.Url + "&secretName=" + remoteArtifact.SecretName, Encoding.UTF8, "application/x-www-form-urlencoded");
         }
         var result = await Client
-            .PostAsync($"{container.GetHttpEndpoint()}api/artifact/download", content);
+            .PostAsync($"{container.GetHttpEndpoint()}api/artifact/download", content, cancellationToken);
 
         if (result.StatusCode != HttpStatusCode.Created)
         {
@@ -195,19 +201,20 @@ public static class MicrocksContainerExtensions
     /// <param name="container">Microcks container</param>
     /// <param name="testResult">The test result to retrieve messages from</param>
     /// <param name="operationName">The name of the operation to retrieve messages to test result</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of RequestResponsePair</returns>
     /// <exception cref="MicrocksException">If messages have not been correctly retrieved</exception>
     public static async Task<List<RequestResponsePair>> GetMessagesForTestCaseAsync(this MicrocksContainer container,
-        TestResult testResult, string operationName)
+        TestResult testResult, string operationName, CancellationToken cancellationToken = default)
     {
         var operation = operationName.Replace('/', '!');
         var testCaseId = $"{testResult.Id}-{testResult.TestNumber}-{HttpUtility.UrlEncode(operation)}";
         var url = $"{container.GetHttpEndpoint()}api/tests/{testResult.Id}/messages/{testCaseId}";
-        var response = await Client.GetAsync(url);
+        var response = await Client.GetAsync(url, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            return await response.Content.ReadFromJsonAsync<List<RequestResponsePair>>();
+            return await response.Content.ReadFromJsonAsync<List<RequestResponsePair>>(cancellationToken);
         }
         else
         {
@@ -221,19 +228,20 @@ public static class MicrocksContainerExtensions
     /// <param name="container">Microcks container</param>
     /// <param name="testResult">The test result to retrieve events from</param>
     /// <param name="operationName">The name of the operation to retrieve events to test result</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>List of UnidirectionalEvent</returns>
     /// <exception cref="MicrocksException">If events have not been correctly retrieved</exception>
     public static async Task<List<UnidirectionalEvent>> GetEventMessagesForTestCaseAsync(this MicrocksContainer container,
-        TestResult testResult, string operationName)
+        TestResult testResult, string operationName, CancellationToken cancellationToken = default)
     {
         var operation = operationName.Replace('/', '!');
         var testCaseId = $"{testResult.Id}-{testResult.TestNumber}-{HttpUtility.UrlEncode(operation)}";
         var url = $"{container.GetHttpEndpoint()}api/tests/{testResult.Id}/events/{testCaseId}";
-        var response = await Client.GetAsync(url);
+        var response = await Client.GetAsync(url, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.OK)
         {
-            return await response.Content.ReadFromJsonAsync<List<UnidirectionalEvent>>();
+            return await response.Content.ReadFromJsonAsync<List<UnidirectionalEvent>>(cancellationToken);
         }
         else
         {
@@ -248,10 +256,11 @@ public static class MicrocksContainerExtensions
     /// <param name="serviceName">Service name</param>
     /// <param name="serviceVersion">Service version</param>
     /// <param name="invocationDate">Date of invocation</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>True if the service has been invoked at least once, false otherwise</returns>
-    public static async Task<bool> VerifyAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
+    public static async Task<bool> VerifyAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null, CancellationToken cancellationToken = default)
     {
-        var dailyInvocationStatistic = await container.GetServiceInvocationsAsync(serviceName, serviceVersion, invocationDate);
+        var dailyInvocationStatistic = await container.GetServiceInvocationsAsync(serviceName, serviceVersion, invocationDate, cancellationToken);
         if (dailyInvocationStatistic != null)
         {
             return dailyInvocationStatistic.DailyCount > 0;
@@ -266,10 +275,11 @@ public static class MicrocksContainerExtensions
     /// <param name="serviceName">Service name</param>
     /// <param name="serviceVersion">Service version</param>
     /// <param name="invocationDate">Date of invocation</param>
+    /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Number of invocations</returns>
-    public static async Task<long> GetServiceInvocationsCountAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
+    public static async Task<long> GetServiceInvocationsCountAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null, CancellationToken cancellationToken = default)
     {
-        var dailyInvocationStatistic = await container.GetServiceInvocationsAsync(serviceName, serviceVersion, invocationDate);
+        var dailyInvocationStatistic = await container.GetServiceInvocationsAsync(serviceName, serviceVersion, invocationDate, cancellationToken);
         if (dailyInvocationStatistic != null)
         {
             return dailyInvocationStatistic.DailyCount;
@@ -277,7 +287,7 @@ public static class MicrocksContainerExtensions
         return 0;
     }
 
-    internal static async Task<DailyInvocationStatistic> GetServiceInvocationsAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null)
+    internal static async Task<DailyInvocationStatistic> GetServiceInvocationsAsync(this MicrocksContainer container, string serviceName, string serviceVersion, DateOnly? invocationDate = null, CancellationToken cancellationToken = default)
     {
         // Encode service name and version and take care of replacing '+' by '%20' as metrics API
         // does not handle '+' in URL path.
@@ -293,13 +303,13 @@ public static class MicrocksContainerExtensions
         // Wait to avoid race condition issue when requesting Microcks Metrics REST API.
         Thread.Sleep(100);
 
-        var response = await Client.GetAsync(url);
+        var response = await Client.GetAsync(url, cancellationToken);
 
         if (response.StatusCode == HttpStatusCode.OK && response.Content.Headers.ContentLength > 0)
         // Deserialize the response content to DailyInvocationStatistic object
         // and return it.
         {
-            return await response.Content.ReadFromJsonAsync<DailyInvocationStatistic>();
+            return await response.Content.ReadFromJsonAsync<DailyInvocationStatistic>(cancellationToken);
         }
         return null;
     }

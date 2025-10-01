@@ -15,6 +15,7 @@
 //
 //
 
+using System.Threading;
 using System.Threading.Tasks;
 using DotNet.Testcontainers.Networks;
 using Microcks.Testcontainers.Connection;
@@ -223,24 +224,26 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <summary>
     /// Starts the Microcks container ensemble asynchronously.
     /// </summary>
-    public async Task StartAsync()
+    /// <param name="cancellationToken">A CancellationToken to observe while waiting for the task to complete.</param>
+    /// <returns>A task that represents the asynchronous start operation.</returns>
+    public async Task StartAsync(CancellationToken cancellationToken = default)
     {
         this.MicrocksContainer = this._microcksBuilder.Build();
-        await this.MicrocksContainer.StartAsync();
+        await this.MicrocksContainer.StartAsync(cancellationToken);
 
         if (this._postmanBuilder != null)
         {
             this.PostmanContainer = this._postmanBuilder
                 .Build();
 
-            await this.PostmanContainer.StartAsync();
+            await this.PostmanContainer.StartAsync(cancellationToken);
         }
         if (this._asyncMinionBuilder != null)
         {
             this.AsyncMinionContainer = this._asyncMinionBuilder
                 .Build();
 
-            await this.AsyncMinionContainer.StartAsync();
+            await this.AsyncMinionContainer.StartAsync(cancellationToken);
         }
     }
 

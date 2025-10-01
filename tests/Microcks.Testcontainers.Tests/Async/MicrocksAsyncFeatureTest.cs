@@ -91,7 +91,7 @@ public sealed class MicrocksAsyncFeatureTest
         };
 
         var taskTestResult = fixture.MicrocksContainerEnsemble.MicrocksContainer
-            .TestEndpointAsync(testRequest);
+            .TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
 
         stopwatch.Start();
         var testResult = await taskTestResult;
@@ -136,7 +136,7 @@ public sealed class MicrocksAsyncFeatureTest
         };
 
         var taskTestResult = fixture.MicrocksContainerEnsemble.MicrocksContainer
-            .TestEndpointAsync(testRequest);
+            .TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
 
         var testResult = await taskTestResult;
 
@@ -166,7 +166,7 @@ public sealed class MicrocksAsyncFeatureTest
         };
 
         var taskTestResult = fixture.MicrocksContainerEnsemble.MicrocksContainer
-            .TestEndpointAsync(testRequest);
+            .TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
 
         var stopwatch = new Stopwatch();
         stopwatch.Start();
