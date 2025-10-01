@@ -15,6 +15,8 @@
 //
 //
 
+namespace Microcks.Testcontainers;
+
 /// <summary>
 /// Represents a remote artifact with its URL and associated secret name.
 /// </summary>
