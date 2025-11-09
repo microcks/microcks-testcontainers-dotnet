@@ -24,52 +24,14 @@ using TestResult = Microcks.Testcontainers.Model.TestResult;
 
 namespace Microcks.Testcontainers.Tests;
 
-public sealed class PostmanContractTestingFunctionalityTests : IAsyncLifetime
+public sealed class PostmanContractTestingFunctionalityTests
+    : IClassFixture<PostmanContractTestingFunctionalityTests.PostmanFixture>
 {
-    private static readonly string BAD_PASTRY_IMAGE = "quay.io/microcks/contract-testing-demo:02";
-    private static readonly string GOOD_PASTRY_IMAGE = "quay.io/microcks/contract-testing-demo:03";
+    private readonly PostmanFixture _fixture;
 
-    private readonly INetwork _network = new NetworkBuilder().Build();
-
-    private readonly IContainer _badImpl;
-    private readonly IContainer _goodImpl;
-    private readonly MicrocksContainerEnsemble _ensemble;
-
-
-    public PostmanContractTestingFunctionalityTests()
+    public PostmanContractTestingFunctionalityTests(PostmanFixture fixture)
     {
-        _badImpl = new ContainerBuilder()
-            .WithImage(BAD_PASTRY_IMAGE)
-            .WithNetwork(_network)
-            .WithNetworkAliases("bad-impl")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3002.*"))
-            .Build();
-
-        _goodImpl = new ContainerBuilder()
-            .WithImage(GOOD_PASTRY_IMAGE)
-            .WithNetwork(_network)
-            .WithNetworkAliases("good-impl")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3003.*"))
-            .Build();
-
-        _ensemble = new MicrocksContainerEnsemble(_network, "quay.io/microcks/microcks-uber:1.12.1")
-            .WithMainArtifacts("apipastries-openapi.yaml")
-            .WithSecondaryArtifacts("apipastries-postman-collection.json")
-            .WithPostman();
-    }
-
-    public async ValueTask InitializeAsync()
-    {
-        await _ensemble.StartAsync(TestContext.Current.CancellationToken);
-        await _badImpl.StartAsync(TestContext.Current.CancellationToken);
-        await _goodImpl.StartAsync(TestContext.Current.CancellationToken);
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        await _badImpl.DisposeAsync();
-        await _goodImpl.DisposeAsync();
-        await _ensemble.DisposeAsync();
+        _fixture = fixture;
     }
 
     [Fact]
@@ -84,7 +46,7 @@ public sealed class PostmanContractTestingFunctionalityTests : IAsyncLifetime
         };
 
         // Test should fail with validation failure messages.
-        TestResult badTestResult = await _ensemble.MicrocksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
+        TestResult badTestResult = await _fixture.Ensemble.MicrocksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         Assert.False(badTestResult.Success);
         Assert.Equal("http://bad-impl:3002", badTestResult.TestedEndpoint);
         Assert.Equal(3, badTestResult.TestCaseResults.Count);
@@ -108,10 +70,61 @@ public sealed class PostmanContractTestingFunctionalityTests : IAsyncLifetime
         };
 
         // Test should succeed with no validation failure messages.
-        TestResult goodTestResult = await _ensemble.MicrocksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
+        TestResult goodTestResult = await _fixture.Ensemble.MicrocksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         Assert.True(goodTestResult.Success);
         Assert.Equal("http://good-impl:3003", goodTestResult.TestedEndpoint);
         Assert.Equal(3, goodTestResult.TestCaseResults.Count);
         Assert.Null(goodTestResult.TestCaseResults[0].TestStepResults[0].Message);
+    }
+
+    public sealed class PostmanFixture : IAsyncDisposable
+    {
+        private static readonly string BAD_PASTRY_IMAGE = "quay.io/microcks/contract-testing-demo:02";
+        private static readonly string GOOD_PASTRY_IMAGE = "quay.io/microcks/contract-testing-demo:03";
+
+        public INetwork Network { get; }
+        public IContainer BadImpl { get; }
+        public IContainer GoodImpl { get; }
+        public MicrocksContainerEnsemble Ensemble { get; }
+
+        public PostmanFixture()
+        {
+            Network = new NetworkBuilder().Build();
+
+            BadImpl = new ContainerBuilder()
+                .WithImage(BAD_PASTRY_IMAGE)
+                .WithNetwork(Network)
+                .WithNetworkAliases("bad-impl")
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3002.*"))
+                .Build();
+
+            GoodImpl = new ContainerBuilder()
+                .WithImage(GOOD_PASTRY_IMAGE)
+                .WithNetwork(Network)
+                .WithNetworkAliases("good-impl")
+                .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3003.*"))
+                .Build();
+
+            Ensemble = new MicrocksContainerEnsemble(Network, "quay.io/microcks/microcks-uber:1.12.1")
+                .WithMainArtifacts("apipastries-openapi.yaml")
+                .WithSecondaryArtifacts("apipastries-postman-collection.json")
+                .WithPostman();
+
+            InitializeAsync().GetAwaiter().GetResult();
+        }
+
+        private async Task InitializeAsync()
+        {
+            await Ensemble.StartAsync();
+            await BadImpl.StartAsync();
+            await GoodImpl.StartAsync();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await BadImpl.DisposeAsync();
+            await GoodImpl.DisposeAsync();
+            await Ensemble.DisposeAsync();
+        }
     }
 }
