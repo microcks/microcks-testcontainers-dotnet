@@ -15,12 +15,9 @@
 //
 //
 
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
-using DotNet.Testcontainers.Networks;
-using Microcks.Testcontainers;
-using Microcks.Testcontainers.Model;
 using Microcks.Testcontainers.Helpers;
+using Microcks.Testcontainers.Model;
+using Microcks.Testcontainers.Tests.Fixtures;
 using System;
 using System.Net;
 using Testcontainers.Keycloak;
@@ -28,32 +25,22 @@ using TestResult = Microcks.Testcontainers.Model.TestResult;
 
 namespace Microcks.Testcontainers.Tests;
 
-public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsyncLifetime
+[Collection("MicrocksTests")]
+public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests
+    : IAsyncLifetime
 {
-    private readonly INetwork _network = new NetworkBuilder().Build();
-    private readonly MicrocksContainer _microcksContainer;
-    private readonly IContainer _goodImpl;
+    private readonly MicrocksContractTestingFixture _fixture;
+
     private readonly KeycloakContainer _keycloak;
 
-    private static readonly string GOOD_PASTRY_IMAGE = "quay.io/microcks/contract-testing-demo:02";
-
-    public MicrocksContractTestingFunctionalityWithOAuth2Tests()
+    public MicrocksContractTestingFunctionalityWithOAuth2Tests(MicrocksContractTestingFixture fixture)
     {
-        _microcksContainer = new MicrocksBuilder()
-            .WithNetwork(_network)
-            .Build();
-
-        _goodImpl = new ContainerBuilder()
-            .WithImage(GOOD_PASTRY_IMAGE)
-            .WithNetwork(_network)
-            .WithNetworkAliases("good-impl")
-            .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3002.*"))
-            .Build();
-
+        _fixture = fixture;
+        var network = _fixture.Network;
         _keycloak = new KeycloakBuilder()
             .WithImage("quay.io/keycloak/keycloak:26.0.0")
             .WithEnvironment(MacOSHelper.GetJavaOptions("JAVA_OPTS_APPEND"))
-            .WithNetwork(_network)
+            .WithNetwork(network)
             .WithNetworkAliases("keycloak")
             .WithCommand("--import-realm")
             .WithResourceMapping("./myrealm-realm.json", "/opt/keycloak/data/import")
@@ -62,27 +49,18 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
 
     public async ValueTask DisposeAsync()
     {
-        await _microcksContainer.DisposeAsync();
         await _keycloak.DisposeAsync();
-        await _goodImpl.DisposeAsync();
-        await _network.DisposeAsync();
     }
 
     public async ValueTask InitializeAsync()
     {
-        _microcksContainer.Started +=
-            (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
-
-        await _network.CreateAsync(TestContext.Current.CancellationToken);
-        await _microcksContainer.StartAsync(TestContext.Current.CancellationToken);
         await _keycloak.StartAsync(TestContext.Current.CancellationToken);
-        await _goodImpl.StartAsync(TestContext.Current.CancellationToken);
     }
 
     [Fact]
     public void ShouldConfigRetrieval()
     {
-        var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
+        var uriBuilder = new UriBuilder(_fixture.MicrocksContainer.GetHttpEndpoint())
         {
             Path = "/api/keycloak/config"
         };
@@ -112,7 +90,7 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests : IAsync
                 .Build()
         };
 
-        TestResult testResult = await _microcksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
+        TestResult testResult = await _fixture.MicrocksContainer.TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         Assert.True(testResult.Success);
         Assert.Equal("http://good-impl:3002", testResult.TestedEndpoint);
         Assert.Equal(3, testResult.TestCaseResults.Count);

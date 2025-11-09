@@ -15,7 +15,6 @@
 //
 //
 
-using Microcks.Testcontainers;
 using NHamcrest;
 using System;
 using System.Net;
@@ -23,26 +22,17 @@ using System.Text.Json;
 using Microcks.Testcontainers.Model;
 using RestAssured.Logging;
 using RestAssured.Response;
-using Xunit.Internal;
-using Microsoft.AspNetCore.Mvc;
 
 namespace Microcks.Testcontainers.Tests;
 
-public sealed class MicrocksSecretCreationTests : IAsyncLifetime
+public sealed class MicrocksSecretCreationTests
+  : IClassFixture<MicrocksSecretCreationTests.MicrocksSecretCreationFixture>
 {
-    private readonly MicrocksContainer _microcksContainer = new MicrocksBuilder()
-      .WithSecrets(new SecretBuilder().WithName("my-secret").WithToken("abc-123-xyz").WithTokenHeader("x-microcks").Build())
-      .WithMainRemoteArtifacts(new RemoteArtifact("https://raw.githubusercontent.com/microcks/microcks/master/samples/APIPastry-openapi.yaml", "my-secret"))
-      .Build();
+    private readonly MicrocksContainer _microcksContainer;
 
-    public async ValueTask DisposeAsync()
+    public MicrocksSecretCreationTests(MicrocksSecretCreationFixture fixture)
     {
-        await _microcksContainer.DisposeAsync();
-    }
-
-    public async ValueTask InitializeAsync()
-    {
-        await _microcksContainer.StartAsync(TestContext.Current.CancellationToken);
+        _microcksContainer = fixture.MicrocksContainer;
     }
 
     [Fact]
@@ -72,7 +62,7 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
     {
         var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
         {
-          Path = "/api/services"
+            Path = "/api/services"
         };
 
         var verifiableResponse = Given()
@@ -111,5 +101,26 @@ public sealed class MicrocksSecretCreationTests : IAsyncLifetime
     public void ShouldThrowExceptionWhenNameNotDefined()
     {
         Assert.Throws<ArgumentNullException>(() => new SecretBuilder().Build());
+    }
+
+
+    public class MicrocksSecretCreationFixture : IAsyncLifetime
+    {
+        private readonly MicrocksContainer _microcksContainer = new MicrocksBuilder()
+          .WithSecrets(new SecretBuilder().WithName("my-secret").WithToken("abc-123-xyz").WithTokenHeader("x-microcks").Build())
+          .WithMainRemoteArtifacts(new RemoteArtifact("https://raw.githubusercontent.com/microcks/microcks/master/samples/APIPastry-openapi.yaml", "my-secret"))
+          .Build();
+
+        public MicrocksContainer MicrocksContainer => _microcksContainer;
+
+        public async ValueTask DisposeAsync()
+        {
+            await _microcksContainer.DisposeAsync();
+        }
+
+        public async ValueTask InitializeAsync()
+        {
+            await _microcksContainer.StartAsync(TestContext.Current.CancellationToken);
+        }
     }
 }

@@ -24,56 +24,34 @@ using Microcks.Testcontainers.Connection;
 using Microcks.Testcontainers.Model;
 using Microsoft.Extensions.Logging;
 using Testcontainers.Kafka;
+using DotNet.Testcontainers.Networks;
 
 namespace Microcks.Testcontainers.Tests.Async.Kafka;
 
 [Collection(nameof(KafkaCollection))]
-public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
+public sealed class MicrocksAsyncKafkaFunctionalityTest
+    : IClassFixture<MicrocksAsyncKafkaFunctionalityTest.KafkaFixture>
 {
     /// <summary>
     /// Image name for the Microcks container.
     /// </summary>
     private const string MicrocksImage = "quay.io/microcks/microcks-uber:1.10.0";
 
-    private MicrocksContainerEnsemble _microcksContainerEnsemble;
+    private readonly KafkaFixture _fixture;
 
-    private KafkaContainer _kafkaContainer;
-
-    public async ValueTask DisposeAsync()
+    public MicrocksAsyncKafkaFunctionalityTest(KafkaFixture fixture)
     {
-        await this._microcksContainerEnsemble.DisposeAsync();
-        await this._kafkaContainer.DisposeAsync();
-    }
-
-    public async ValueTask InitializeAsync()
-    {
-        var network = new NetworkBuilder().Build();
-
-        this._kafkaContainer = new KafkaBuilder()
-            .WithImage("confluentinc/cp-kafka:7.8.0")
-            .WithNetwork(network)
-            .WithNetworkAliases("kafka")
-            .WithListener("kafka:19092")
-            .Build();
-
-        // Start the Kafka container
-        await this._kafkaContainer.StartAsync();
-
-        this._microcksContainerEnsemble = new MicrocksContainerEnsemble(network, MicrocksImage)
-            .WithMainArtifacts("pastry-orders-asyncapi.yml")
-            .WithKafkaConnection(new KafkaConnection($"kafka:19092"));
-
-        await this._microcksContainerEnsemble.StartAsync();
+        _fixture = fixture;
     }
 
     [Fact]
     public void ShouldReceivedKafkaMessageWhenMessageIsEmitted()
     {
         const string expectedMessage = "{\"id\":\"4dab240d-7847-4e25-8ef3-1530687650c8\",\"customerId\":\"fe1088b3-9f30-4dc1-a93d-7b74f0a072b9\",\"status\":\"VALIDATED\",\"productQuantities\":[{\"quantity\":2,\"pastryName\":\"Croissant\"},{\"quantity\":1,\"pastryName\":\"Millefeuille\"}]}";
-        var kafkaTopic = this._microcksContainerEnsemble.AsyncMinionContainer
+        var kafkaTopic = _fixture.MicrocksContainerEnsemble.AsyncMinionContainer
             .GetKafkaMockTopic("Pastry orders API", "0.1.0", "SUBSCRIBE pastry/orders");
 
-        var bootstrapServers = this._kafkaContainer.GetBootstrapAddress()
+        var bootstrapServers = _fixture.KafkaContainer.GetBootstrapAddress()
             .Replace("PLAINTEXT://", "", StringComparison.OrdinalIgnoreCase);
 
         // Initialize Kafka consumer to receive message
@@ -127,7 +105,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
         // Init Kafka producer to send a message
         var producerConfig = new ProducerConfig
         {
-            BootstrapServers = this._kafkaContainer.GetBootstrapAddress()
+            BootstrapServers = _fixture.KafkaContainer.GetBootstrapAddress()
                 .Replace("PLAINTEXT://", "", StringComparison.OrdinalIgnoreCase),
             ClientId = $"test-client-{DateTime.Now.Ticks}",
         };
@@ -137,15 +115,15 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
             .SetValueSerializer(Serializers.Utf8)
             .SetErrorHandler((_, e) =>
             {
-                this._kafkaContainer.Logger.LogError("Error: {Reason}", e.Reason);
+                _fixture.KafkaContainer.Logger.LogError("Error: {Reason}", e.Reason);
             })
             .SetLogHandler((_, logMessage) =>
             {
-                this._kafkaContainer.Logger.LogInformation("{Name} sending {Message}", logMessage.Name, logMessage.Message);
+                _fixture.KafkaContainer.Logger.LogInformation("{Name} sending {Message}", logMessage.Name, logMessage.Message);
             })
             .Build();
 
-        var taskTestResult = this._microcksContainerEnsemble
+        var taskTestResult = _fixture.MicrocksContainerEnsemble
             .MicrocksContainer
             .TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
 
@@ -197,7 +175,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
         // Init Kafka producer to send a message
         var producerConfig = new ProducerConfig
         {
-            BootstrapServers = this._kafkaContainer.GetBootstrapAddress()
+            BootstrapServers = _fixture.KafkaContainer.GetBootstrapAddress()
                 .Replace("PLAINTEXT://", "", StringComparison.OrdinalIgnoreCase),
             ClientId = $"test-client-{DateTime.Now.Ticks}",
         };
@@ -207,15 +185,15 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
             .SetValueSerializer(Serializers.Utf8)
             .SetErrorHandler((_, e) =>
             {
-                this._kafkaContainer.Logger.LogError("Error: {Reason}", e.Reason);
+                _fixture.KafkaContainer.Logger.LogError("Error: {Reason}", e.Reason);
             })
             .SetLogHandler((_, logMessage) =>
             {
-                this._kafkaContainer.Logger.LogInformation("{Name} sending {Message}", logMessage.Name, logMessage.Message);
+                _fixture.KafkaContainer.Logger.LogInformation("{Name} sending {Message}", logMessage.Name, logMessage.Message);
             })
             .Build();
 
-        var taskTestResult = this._microcksContainerEnsemble
+        var taskTestResult = _fixture.MicrocksContainerEnsemble
             .MicrocksContainer
             .TestEndpointAsync(testRequest, TestContext.Current.CancellationToken);
         await Task.Delay(750, TestContext.Current.CancellationToken);
@@ -249,7 +227,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
         Assert.Contains("object has missing required properties ([\"status\"]", testStepResults.First().Message);
 
         // Retrieve event messages for the failing test case.
-        var events = await _microcksContainerEnsemble.MicrocksContainer
+        var events = await _fixture.MicrocksContainerEnsemble.MicrocksContainer
             .GetEventMessagesForTestCaseAsync(testResult, "SUBSCRIBE pastry/orders", TestContext.Current.CancellationToken);
         // We should have at least 4 events.
         Assert.True(events.Count >= 4);
@@ -261,6 +239,43 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest : IAsyncLifetime
             Assert.NotNull(e.EventMessage);
             Assert.Equal(message, e.EventMessage.Content);
         });
+    }
+
+    // Inner fixture to share Kafka and Microcks ensemble between tests
+    public sealed class KafkaFixture : IAsyncDisposable
+    {
+        private const string MicrocksImage = "quay.io/microcks/microcks-uber:1.10.0";
+
+        public INetwork Network { get; }
+        public KafkaContainer KafkaContainer { get; }
+        public MicrocksContainerEnsemble MicrocksContainerEnsemble { get; }
+
+        public KafkaFixture()
+        {
+            Network = new NetworkBuilder().Build();
+
+            KafkaContainer = new KafkaBuilder()
+                .WithImage("confluentinc/cp-kafka:7.8.0")
+                .WithNetwork(Network)
+                .WithNetworkAliases("kafka")
+                .WithListener("kafka:19092")
+                .Build();
+
+            KafkaContainer.StartAsync().GetAwaiter().GetResult();
+
+            MicrocksContainerEnsemble = new MicrocksContainerEnsemble(Network, MicrocksImage)
+                .WithMainArtifacts("pastry-orders-asyncapi.yml")
+                .WithKafkaConnection(new KafkaConnection($"kafka:19092"));
+
+            MicrocksContainerEnsemble.StartAsync().GetAwaiter().GetResult();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await MicrocksContainerEnsemble.DisposeAsync();
+            await KafkaContainer.DisposeAsync();
+            await Network.DisposeAsync();
+        }
     }
 
 }
