@@ -192,7 +192,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
             _mainRemoteArtifacts = new List<RemoteArtifact>(urls.Length);
         }
         _mainRemoteArtifacts.AddRange(urls.Select(url => new RemoteArtifact(url, null)));
-        
+
         return this;
     }
 

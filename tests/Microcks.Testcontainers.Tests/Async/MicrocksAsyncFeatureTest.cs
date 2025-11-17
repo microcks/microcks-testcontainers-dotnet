@@ -149,7 +149,7 @@ public sealed class MicrocksAsyncFeatureTest
         Assert.True(string.IsNullOrEmpty(testResult.TestCaseResults.First().TestStepResults.First().Message));
     }
 
-        /// <summary>
+    /// <summary>
     /// Test that verifies that the WaitForConditionAsync method throws a TaskCanceledException
     /// when the specified timeout is reached.
     /// </summary>

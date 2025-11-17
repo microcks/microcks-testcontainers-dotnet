@@ -23,137 +23,156 @@ using System;
 using System.IO;
 using System.Net;
 using System.Text.Json;
-using System.Threading.Tasks;
-using Xunit.Internal;
 
 namespace Microcks.Testcontainers.Tests;
 
-public sealed class MicrocksMockingFunctionalityTest : IAsyncLifetime
+public sealed class MicrocksMockingFunctionalityTest
+  : IClassFixture<MicrocksMockingFunctionalityTest.MicrocksMockingFixture>
 {
-  private readonly MicrocksContainer _microcksContainer = new MicrocksBuilder()
-    .WithSnapshots("microcks-repository.json")
-    .WithMainArtifacts("apipastries-openapi.yaml", Path.Combine("subdir", "weather-forecast-openapi.yaml"))
-    .WithMainRemoteArtifacts("https://raw.githubusercontent.com/microcks/microcks/master/samples/APIPastry-openapi.yaml")
-    .WithSecondaryArtifacts("apipastries-postman-collection.json")
-    .Build();
+    private readonly MicrocksContainer _microcksContainer;
 
-  public async ValueTask DisposeAsync()
-  {
-    await _microcksContainer.DisposeAsync();
-  }
-
-  public async ValueTask InitializeAsync()
-  {
-    await _microcksContainer.StartAsync(TestContext.Current.CancellationToken);
-  }
-
-  [Fact]
-  public void ShouldConfigureMockEndpoints()
-  {
-    string baseWsUrl = $"{_microcksContainer.GetSoapMockEndpoint("Pastries Service", "1.0")}";
-    Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}soap/Pastries Service/1.0", baseWsUrl);
-
-    string baseApiUrl = $"{_microcksContainer.GetRestMockEndpoint("API Pastries", "0.0.1")}";
-    Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}rest/API Pastries/0.0.1", baseApiUrl);
-
-    string baseGraphUrl = $"{_microcksContainer.GetGraphQLMockEndpoint("Pastries Graph", "1")}";
-    Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}graphql/Pastries Graph/1", baseGraphUrl);
-
-    string baseGrpcUrl = $"{_microcksContainer.GetGrpcMockEndpoint()}";
-    Assert.Equal($"grpc://{_microcksContainer.Hostname}:{_microcksContainer.GetMappedPublicPort(MicrocksBuilder.MicrocksGrpcPort)}/", baseGrpcUrl);
-  }
-
-  [Fact]
-  public void ShouldConfigRetrieval()
-  {
-    var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
+    public MicrocksMockingFunctionalityTest(MicrocksMockingFixture fixture)
     {
-      Path = "/api/keycloak/config"
-    };
+        _microcksContainer = fixture.MicrocksContainer;
+    }
 
-    Given()
-      .When()
-      .Get(uriBuilder.ToString())
-      .Then()
-      .StatusCode(HttpStatusCode.OK);
-  }
-
-  [Fact]
-  public async Task ShouldAvailableServices()
-  {
-    var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
+    [Fact]
+    public void ShouldConfigureMockEndpoints()
     {
-      Path = "/api/services"
-    };
+        string baseWsUrl = $"{_microcksContainer.GetSoapMockEndpoint("Pastries Service", "1.0")}";
+        Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}soap/Pastries Service/1.0", baseWsUrl);
 
-    var verifiableResponse = Given()
-      .Log(new LogConfiguration { RequestLogLevel = RequestLogLevel.All })
-      .When()
-      .Get(uriBuilder.ToString())
-      .Then()
-      .StatusCode(HttpStatusCode.OK);
+        string baseApiUrl = $"{_microcksContainer.GetRestMockEndpoint("API Pastries", "0.0.1")}";
+        Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}rest/API Pastries/0.0.1", baseApiUrl);
 
-    // newtonsoft json jsonpath $.length is not supported
-    var services = await verifiableResponse
-      .Extract()
-      .Response().Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
+        string baseGraphUrl = $"{_microcksContainer.GetGraphQLMockEndpoint("Pastries Graph", "1")}";
+        Assert.Equal($"{_microcksContainer.GetHttpEndpoint()}graphql/Pastries Graph/1", baseGraphUrl);
 
-    var document = JsonDocument.Parse(services);
-    Assert.Equal(7, document.RootElement.GetArrayLength());
+        string baseGrpcUrl = $"{_microcksContainer.GetGrpcMockEndpoint()}";
+        Assert.Equal($"grpc://{_microcksContainer.Hostname}:{_microcksContainer.GetMappedPublicPort(MicrocksBuilder.MicrocksGrpcPort)}/", baseGrpcUrl);
+    }
 
-    verifiableResponse.Body("$[0:].name", Has.Items(
-        Is.EqualTo("Petstore API"),
-        Is.EqualTo("HelloService Mock"),
-        Is.EqualTo("io.github.microcks.grpc.hello.v1.HelloService"),
-        Is.EqualTo("Movie Graph API"),
-        Is.EqualTo("API Pastry - 2.0"),
-        Is.EqualTo("API Pastries"),
-        Is.EqualTo("WeatherForecast API")
-        ),
-      VerifyAs.Json);
-  }
+    [Fact]
+    public void ShouldConfigRetrieval()
+    {
+        var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
+        {
+            Path = "/api/keycloak/config"
+        };
 
-  [Fact]
-  public async Task ShouldMockVariousCapabilities()
-  {
-    var pastries = _microcksContainer.GetRestMockEndpoint("API Pastries", "0.0.1");
+        Given()
+          .When()
+          .Get(uriBuilder.ToString())
+          .Then()
+          .StatusCode(HttpStatusCode.OK);
+    }
 
-    Assert.False(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
-    Assert.Equal(0, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+    [Fact]
+    public async Task ShouldAvailableServices()
+    {
+        var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
+        {
+            Path = "/api/services"
+        };
 
-    Given()
-      .When()
-      .Get($"{pastries}/pastries/Millefeuille")
-      .Then()
-      .StatusCode(HttpStatusCode.OK)
-      .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
+        var verifiableResponse = Given()
+          .Log(new LogConfiguration { RequestLogLevel = RequestLogLevel.All })
+          .When()
+          .Get(uriBuilder.ToString())
+          .Then()
+          .StatusCode(HttpStatusCode.OK);
 
-    Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
-    Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+        // newtonsoft json jsonpath $.length is not supported
+        var services = await verifiableResponse
+          .Extract()
+          .Response().Content.ReadAsStringAsync(TestContext.Current.CancellationToken);
 
-    // Vérifier que le mock de l'API Pastry est bien disponible
-    Given()
-      .When()
-      .Get($"{pastries}/pastries/Eclair Chocolat")
-      .Then()
-      .StatusCode(HttpStatusCode.OK)
-      .Body("$.name", IsEqualMatcher<string>.EqualTo("Eclair Chocolat"));
+        var document = JsonDocument.Parse(services);
+        Assert.Equal(7, document.RootElement.GetArrayLength());
 
-    Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
-    Assert.Equal(2, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+        verifiableResponse.Body("$[0:].name", Has.Items(
+            Is.EqualTo("Petstore API"),
+            Is.EqualTo("HelloService Mock"),
+            Is.EqualTo("io.github.microcks.grpc.hello.v1.HelloService"),
+            Is.EqualTo("Movie Graph API"),
+            Is.EqualTo("API Pastry - 2.0"),
+            Is.EqualTo("API Pastries"),
+            Is.EqualTo("WeatherForecast API")
+            ),
+          VerifyAs.Json);
+    }
 
-    // Switch to the other version of the API Pastry
-    var baseApiUrl = _microcksContainer.GetRestMockEndpoint("API Pastry - 2.0", "2.0.0");
+    [Fact]
+    public async Task ShouldMockVariousCapabilities()
+    {
+        var pastries = _microcksContainer.GetRestMockEndpoint("API Pastries", "0.0.1");
 
-    Given()
-      .When()
-      .Get($"{baseApiUrl}" + "/pastry/Millefeuille")
-      .Then()
-      .StatusCode(HttpStatusCode.OK)
-      .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
+        Assert.False(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal(0, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
 
-    Assert.True(await _microcksContainer.VerifyAsync("API Pastry - 2.0", "2.0.0", cancellationToken: TestContext.Current.CancellationToken));
-    Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastry - 2.0", "2.0.0", cancellationToken: TestContext.Current.CancellationToken));
-  }
+        Given()
+          .When()
+          .Get($"{pastries}/pastries/Millefeuille")
+          .Then()
+          .StatusCode(HttpStatusCode.OK)
+          .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
+
+        Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+
+        // Vérifier que le mock de l'API Pastry est bien disponible
+        Given()
+          .When()
+          .Get($"{pastries}/pastries/Eclair Chocolat")
+          .Then()
+          .StatusCode(HttpStatusCode.OK)
+          .Body("$.name", IsEqualMatcher<string>.EqualTo("Eclair Chocolat"));
+
+        Assert.True(await _microcksContainer.VerifyAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal(2, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastries", "0.0.1", cancellationToken: TestContext.Current.CancellationToken));
+
+        // Switch to the other version of the API Pastry
+        var baseApiUrl = _microcksContainer.GetRestMockEndpoint("API Pastry - 2.0", "2.0.0");
+
+        Given()
+          .When()
+          .Get($"{baseApiUrl}" + "/pastry/Millefeuille")
+          .Then()
+          .StatusCode(HttpStatusCode.OK)
+          .Body("$.name", IsEqualMatcher<string>.EqualTo("Millefeuille"));
+
+        Assert.True(await _microcksContainer.VerifyAsync("API Pastry - 2.0", "2.0.0", cancellationToken: TestContext.Current.CancellationToken));
+        Assert.Equal(1, await _microcksContainer.GetServiceInvocationsCountAsync("API Pastry - 2.0", "2.0.0", cancellationToken: TestContext.Current.CancellationToken));
+    }
+
+    /// <summary>
+    /// Fixture for Microcks Mocking Functionality tests.
+    /// </summary>
+    public sealed class MicrocksMockingFixture : IAsyncDisposable
+    {
+        public MicrocksContainer MicrocksContainer { get; }
+
+        public MicrocksMockingFixture()
+        {
+            MicrocksContainer = new MicrocksBuilder()
+                .WithSnapshots("microcks-repository.json")
+                .WithMainArtifacts("apipastries-openapi.yaml", Path.Combine("subdir", "weather-forecast-openapi.yaml"))
+                .WithMainRemoteArtifacts("https://raw.githubusercontent.com/microcks/microcks/master/samples/APIPastry-openapi.yaml")
+                .WithSecondaryArtifacts("apipastries-postman-collection.json")
+                .Build();
+
+            InitializeAsync().GetAwaiter().GetResult();
+        }
+
+        private async Task InitializeAsync()
+        {
+            await MicrocksContainer.StartAsync();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            await MicrocksContainer.DisposeAsync();
+        }
+    }
 
 }
