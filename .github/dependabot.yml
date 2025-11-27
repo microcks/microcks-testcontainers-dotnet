@@ -16,28 +16,13 @@ updates:
       day: "sunday"
     open-pull-requests-limit: 3
     rebase-strategy: disabled
-    groups:
-      microsoft-sbom:
-        patterns: ['Microsoft.Sbom.Targets']
-      Microsoft.NET.Test.Sdk:
-        patterns: ['Microsoft.NET.Test.Sdk']
-      coverlet.collector:
-        patterns: ['coverlet.collector']
       testcontainers:
         patterns: [ 'Testcontainers', 'Testcontainers.*']
       microsoft:
         patterns: [Microsoft.*, System.*]
-      xunit:
-        patterns: [xunit.*]
-      # Grouping for Testcontainers
-      kafka:
-        patterns: ['Confluent.Kafka']
-      RabbitMQ.Client:
-        patterns: ['RabbitMQ.Client']
-      RestAssured.Net:
-        patterns: ['RestAssured.Net']
-      all-dependencies:
-        patterns: ['*']
+        exclude-patterns:
+         - Microsoft.Sbom.Targets
+         - Microsoft.NET.Test.Sdk
 
 # Github Actions updates
   - package-ecosystem: github-actions
