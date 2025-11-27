@@ -16,6 +16,7 @@ updates:
       day: "sunday"
     open-pull-requests-limit: 3
     rebase-strategy: disabled
+    groups:
       testcontainers:
         patterns: [ 'Testcontainers', 'Testcontainers.*']
       microsoft:
