@@ -78,7 +78,7 @@ public static class MicrocksContainerExtensions
             try
             {
                 await WaitForConditionAsync(async () => !(await RefreshTestResultAsync(httpEndpoint, testResultId, cancellationToken)).InProgress,
-                    atMost: TimeSpan.FromMilliseconds(1000).Add(testRequest.Timeout),
+                    atMost: TimeSpan.FromMilliseconds(3000).Add(testRequest.Timeout),
                     delay: TimeSpan.FromMilliseconds(100),
                     interval: TimeSpan.FromMilliseconds(200),
                     cancellationToken);
