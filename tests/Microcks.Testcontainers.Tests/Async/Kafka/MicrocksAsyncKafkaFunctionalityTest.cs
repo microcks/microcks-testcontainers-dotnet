@@ -108,6 +108,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest
             BootstrapServers = _fixture.KafkaContainer.GetBootstrapAddress()
                 .Replace("PLAINTEXT://", "", StringComparison.OrdinalIgnoreCase),
             ClientId = $"test-client-{DateTime.Now.Ticks}",
+            Acks = Acks.All
         };
 
         using var producer = new ProducerBuilder<string, string>(producerConfig)
@@ -178,6 +179,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest
             BootstrapServers = _fixture.KafkaContainer.GetBootstrapAddress()
                 .Replace("PLAINTEXT://", "", StringComparison.OrdinalIgnoreCase),
             ClientId = $"test-client-{DateTime.Now.Ticks}",
+            Acks = Acks.All
         };
 
         using var producer = new ProducerBuilder<string, string>(producerConfig)
