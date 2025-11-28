@@ -15,11 +15,8 @@
 //
 //
 
-using DotNet.Testcontainers.Builders;
-using DotNet.Testcontainers.Containers;
-using DotNet.Testcontainers.Networks;
-using Microcks.Testcontainers;
 using Microcks.Testcontainers.Model;
+using Microcks.Testcontainers.Tests.Fixtures;
 using System;
 using System.Collections.Generic;
 using System.Net;
@@ -27,62 +24,20 @@ using TestResult = Microcks.Testcontainers.Model.TestResult;
 
 namespace Microcks.Testcontainers.Tests;
 
-public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
+[Collection("MicrocksTests")]
+public sealed class MicrocksContractTestingFunctionalityTests
 {
-    private readonly INetwork _network = new NetworkBuilder().Build();
-    private readonly MicrocksContainer _microcksContainer;
-    private readonly IContainer _badImpl;
-    private readonly IContainer _goodImpl;
+    private readonly MicrocksContractTestingFixture _fixture;
 
-
-    private static readonly string BAD_PASTRY_IMAGE = "quay.io/microcks/contract-testing-demo:01";
-    private static readonly string GOOD_PASTRY_IMAGE = "quay.io/microcks/contract-testing-demo:02";
-
-    public MicrocksContractTestingFunctionalityTests()
+    public MicrocksContractTestingFunctionalityTests(MicrocksContractTestingFixture fixture)
     {
-        _microcksContainer = new MicrocksBuilder()
-            .WithNetwork(_network)
-            .Build();
-
-        _badImpl = new ContainerBuilder()
-          .WithImage(BAD_PASTRY_IMAGE)
-          .WithNetwork(_network)
-          .WithNetworkAliases("bad-impl")
-          .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3001.*"))
-          .Build();
-
-        _goodImpl = new ContainerBuilder()
-          .WithImage(GOOD_PASTRY_IMAGE)
-          .WithNetwork(_network)
-          .WithNetworkAliases("good-impl")
-          .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3002.*"))
-          .Build();
-    }
-
-    public async ValueTask DisposeAsync()
-    {
-        // Dispose of the containers in reverse order of creation
-        await _microcksContainer.DisposeAsync();
-        await _badImpl.DisposeAsync();
-        await _goodImpl.DisposeAsync();
-        await _network.DisposeAsync();
-    }
-
-    public async ValueTask InitializeAsync()
-    {
-        _microcksContainer.Started +=
-          (_, _) => _microcksContainer.ImportAsMainArtifact("apipastries-openapi.yaml");
-
-        await _network.CreateAsync();
-        await _microcksContainer.StartAsync();
-        await _badImpl.StartAsync();
-        await _goodImpl.StartAsync();
+        _fixture = fixture;
     }
 
     [Fact]
     public void ShouldConfigRetrieval()
     {
-        var uriBuilder = new UriBuilder(_microcksContainer.GetHttpEndpoint())
+        var uriBuilder = new UriBuilder(_fixture.MicrocksContainer.GetHttpEndpoint())
         {
             Path = "/api/keycloak/config"
         };
@@ -106,14 +61,14 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
         };
 
         // First test should fail with validation failure messages.
-        TestResult badTestResult = await _microcksContainer.TestEndpointAsync(badTestRequest, TestContext.Current.CancellationToken);
+        TestResult badTestResult = await _fixture.MicrocksContainer.TestEndpointAsync(badTestRequest, TestContext.Current.CancellationToken);
         Assert.False(badTestResult.Success);
         Assert.Equal("http://bad-impl:3001", badTestResult.TestedEndpoint);
         Assert.Equal(3, badTestResult.TestCaseResults.Count);
         Assert.Contains("string found, number expected", badTestResult.TestCaseResults[0].TestStepResults[0].Message);
 
         // Retrieve messages for the failing test case.
-        List<RequestResponsePair> messages = await _microcksContainer.GetMessagesForTestCaseAsync(badTestResult, "GET /pastries", TestContext.Current.CancellationToken);
+        List<RequestResponsePair> messages = await _fixture.MicrocksContainer.GetMessagesForTestCaseAsync(badTestResult, "GET /pastries", TestContext.Current.CancellationToken);
         Assert.Equal(3, messages.Count);
         Assert.All(messages, message =>
         {
@@ -134,7 +89,7 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
             TestEndpoint = "http://good-impl:3002",
             Timeout = TimeSpan.FromMilliseconds(2000)
         };
-        TestResult goodTestResult = await _microcksContainer.TestEndpointAsync(goodTestRequest, TestContext.Current.CancellationToken
+        TestResult goodTestResult = await _fixture.MicrocksContainer.TestEndpointAsync(goodTestRequest, TestContext.Current.CancellationToken
         );
         Assert.True(goodTestResult.Success);
         Assert.Equal("http://good-impl:3002", goodTestResult.TestedEndpoint);
@@ -163,7 +118,7 @@ public sealed class MicrocksContractTestingFunctionalityTests : IAsyncLifetime
       }
         };
 
-        TestResult goodTestResultWithHeader = await _microcksContainer.TestEndpointAsync(goodTestRequestWithHeader, TestContext.Current.CancellationToken);
+        TestResult goodTestResultWithHeader = await _fixture.MicrocksContainer.TestEndpointAsync(goodTestRequestWithHeader, TestContext.Current.CancellationToken);
         Assert.True(goodTestResultWithHeader.Success);
         Assert.Equal("http://good-impl:3002", goodTestResultWithHeader.TestedEndpoint);
         Assert.Equal(3, goodTestResultWithHeader.TestCaseResults.Count);
