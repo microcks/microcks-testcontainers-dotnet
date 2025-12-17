@@ -38,6 +38,16 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// </summary>
     public const ushort MicrocksGrpcPort = 9090;
 
+    /// <summary>
+    /// Environment variable name used to configure Microcks logging level for the Microcks package.
+    /// </summary>
+    public const string MicrocksLoggingLevelEnvVar = "LOGGING_LEVEL_IO_GITHUB_MICROCKS";
+
+    /// <summary>
+    /// Environment variable value for enabling DEBUG logging.
+    /// </summary>
+    public const string DebugLogLevel = "DEBUG";
+
     private List<string> _snapshots;
 
     private List<string> _mainArtifacts;
@@ -267,5 +277,13 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
         }
 
         return this;
+    }
+
+    /// <summary>
+    /// Enables DEBUG log level for Microcks components inside the container.
+    /// </summary>
+    public MicrocksBuilder WithDebugLogLevel()
+    {
+        return this.WithEnvironment(MicrocksLoggingLevelEnvVar, DebugLogLevel);
     }
 }
