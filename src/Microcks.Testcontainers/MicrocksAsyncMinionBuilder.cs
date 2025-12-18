@@ -146,7 +146,7 @@ public sealed class MicrocksAsyncMinionBuilder
     public MicrocksAsyncMinionBuilder WithDebugLogLevel()
     {
         return this
-            .WithEnvironment(ConfigurationConstants.QuarkusConsoleLogLevelEnvVar, ConfigurationConstants.DebugLogLevel)
-            .WithEnvironment(ConfigurationConstants.QuarkusMicrocksCategoryLogLevelEnvVar, ConfigurationConstants.DebugLogLevel);
+            .WithEnvironment(ConfigurationConstants.QuarkusConsoleLogLevelEnvVar, ConfigurationConstants.DebugLogLevelEnvVar)
+            .WithEnvironment(ConfigurationConstants.QuarkusMicrocksCategoryLogLevelEnvVar, ConfigurationConstants.DebugLogLevelEnvVar);
     }
 }

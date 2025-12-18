@@ -33,7 +33,7 @@ namespace Microcks.Testcontainers.Helpers
         /// <summary>
         /// Environment variable value for enabling DEBUG logging.
         /// </summary>
-        public const string DebugLogLevel = "DEBUG";
+        public const string DebugLogLevelEnvVar = "DEBUG";
 
         /// <summary>
         /// Environment variable name used by Quarkus to configure console log level.

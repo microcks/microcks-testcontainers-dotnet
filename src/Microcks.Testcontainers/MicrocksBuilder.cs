@@ -274,6 +274,6 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// </summary>
     public MicrocksBuilder WithDebugLogLevel()
     {
-        return this.WithEnvironment(ConfigurationConstants.MicrocksLoggingLevelEnvVar, ConfigurationConstants.DebugLogLevel);
+        return this.WithEnvironment(ConfigurationConstants.MicrocksLoggingLevelEnvVar, ConfigurationConstants.DebugLogLevelEnvVar);
     }
 }
