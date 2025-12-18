@@ -221,35 +221,6 @@ await TestcontainersSettings.ExposeHostPortsAsync(ports)
     .ConfigureAwait(false);
 ```
 
-### Enabling DEBUG logs in Microcks containers
-
-When troubleshooting startup, imports, or contract testing issues, it can be useful to increase Microcks logging verbosity.
-
-This library provides convenience methods that set the same environment variables documented by Microcks:
-
-- Main Microcks container: sets `LOGGING_LEVEL_IO_GITHUB_MICROCKS=DEBUG`
-- Async minion container (Quarkus): sets `QUARKUS_LOG_CONSOLE_LEVEL=DEBUG` and `QUARKUS_LOG_CATEGORY__IO_GITHUB_MICROCKS__LEVEL=DEBUG`
-
-Enable DEBUG logs for a single Microcks container:
-
-```csharp
-MicrocksContainer container = new MicrocksBuilder()
-    .WithImage("quay.io/microcks/microcks-uber:1.13.0")
-    .WithDebugLogLevel()
-    .Build();
-await container.StartAsync();
-```
-
-Enable DEBUG logs for an ensemble (main + async minion):
-
-```csharp
-MicrocksContainerEnsemble ensemble = new MicrocksContainerEnsemble(network, "quay.io/microcks/microcks-uber:1.13.0")
-    .WithDebugLogLevel()
-    .WithMainArtifacts("pastry-orders-asyncapi.yml")
-    .WithAsyncFeature();
-
-await ensemble.StartAsync();
-```
 
 ### Advanced features with MicrocksContainersEnsemble
 
@@ -383,3 +354,18 @@ testResult.IsSuccess.Should().BeTrue();
 ```
 
 In addition, you can use the `GetEventMessagesForTestCaseAsync()` method to retrieve the events received during the test.
+
+#### Troubleshooting
+
+You can enable debug logs on the Microcks container by setting the debug log level and then retrieving the logs:
+
+```csharp
+MicrocksContainer container = new MicrocksBuilder()
+    .WithImage("quay.io/microcks/microcks-uber:1.13.0")
+    .WithDebugLogLevel()
+    .Build();
+await container.StartAsync();
+```
+
+The same .withDebugLogLevel() method is available on also MicrocksContainersEnsemble for enabling debug logs on all contained Microcks containers.
+```
