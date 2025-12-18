@@ -15,34 +15,30 @@
 //
 //
 
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+namespace Microcks.Testcontainers.Helpers;
 
-namespace Microcks.Testcontainers.Helpers
+/// <summary>
+/// Configuration constants for Microcks Testcontainers.
+/// </summary>
+public class ConfigurationConstants
 {
-    public class ConfigurationConstants
-    {
-        /// <summary>
-        /// Environment variable name used to configure Microcks logging level for the Microcks package.
-        /// </summary>
-        public const string MicrocksLoggingLevelEnvVar = "LOGGING_LEVEL_IO_GITHUB_MICROCKS";
+    /// <summary>
+    /// Environment variable name used to configure Microcks logging level for the Microcks package.
+    /// </summary>
+    public const string MicrocksLoggingLevelEnvVar = "LOGGING_LEVEL_IO_GITHUB_MICROCKS";
 
-        /// <summary>
-        /// Environment variable value for enabling DEBUG logging.
-        /// </summary>
-        public const string DebugLogLevelEnvVar = "DEBUG";
+    /// <summary>
+    /// Environment variable value for enabling DEBUG logging.
+    /// </summary>
+    public const string DebugLogLevelEnvVar = "DEBUG";
 
-        /// <summary>
-        /// Environment variable name used by Quarkus to configure console log level.
-        /// </summary>
-        public const string QuarkusConsoleLogLevelEnvVar = "QUARKUS_LOG_CONSOLE_LEVEL";
+    /// <summary>
+    /// Environment variable name used by Quarkus to configure console log level.
+    /// </summary>
+    public const string QuarkusConsoleLogLevelEnvVar = "QUARKUS_LOG_CONSOLE_LEVEL";
 
-        /// <summary>
-        /// Environment variable name used by Quarkus to configure the Microcks category log level.
-        /// </summary>
-        public const string QuarkusMicrocksCategoryLogLevelEnvVar = "QUARKUS_LOG_CATEGORY__IO_GITHUB_MICROCKS__LEVEL";
-    }
+    /// <summary>
+    /// Environment variable name used by Quarkus to configure the Microcks category log level.
+    /// </summary>
+    public const string QuarkusMicrocksCategoryLogLevelEnvVar = "QUARKUS_LOG_CATEGORY__IO_GITHUB_MICROCKS__LEVEL";
 }
