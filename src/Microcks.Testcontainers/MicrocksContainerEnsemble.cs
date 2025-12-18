@@ -29,7 +29,7 @@ namespace Microcks.Testcontainers;
 /// </summary>
 public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotManager<MicrocksContainerEnsemble>
 {
-    private readonly MicrocksBuilder _microcksBuilder;
+    private MicrocksBuilder _microcksBuilder;
 
     private ContainerBuilder _postmanBuilder;
     private MicrocksAsyncMinionBuilder _asyncMinionBuilder;
@@ -190,7 +190,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
 
         if (this._debugLogLevelEnabled)
         {
-            this._asyncMinionBuilder.WithDebugLogLevel();
+            this._asyncMinionBuilder = this._asyncMinionBuilder.WithDebugLogLevel();
         }
 
         return this;
@@ -238,10 +238,10 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     public MicrocksContainerEnsemble WithDebugLogLevel()
     {
         this._debugLogLevelEnabled = true;
-        this._microcksBuilder.WithDebugLogLevel();
+        this._microcksBuilder = this._microcksBuilder.WithDebugLogLevel();
 
         // If async feature has already been enabled, apply immediately.
-        this._asyncMinionBuilder?.WithDebugLogLevel();
+        this._asyncMinionBuilder = this._asyncMinionBuilder?.WithDebugLogLevel();
 
         return this;
     }

@@ -18,6 +18,7 @@
 
 using DotNet.Testcontainers.Networks;
 using Microcks.Testcontainers.Connection;
+using Microcks.Testcontainers.Helpers;
 
 namespace Microcks.Testcontainers;
 
@@ -134,20 +135,6 @@ public sealed class MicrocksAsyncMinionBuilder
         return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(new ContainerConfiguration(environments: environments)));
     }
 
-    /// <summary>
-    /// Environment variable name used by Quarkus to configure console log level.
-    /// </summary>
-    public const string QuarkusConsoleLogLevelEnvVar = "QUARKUS_LOG_CONSOLE_LEVEL";
-
-    /// <summary>
-    /// Environment variable name used by Quarkus to configure the Microcks category log level.
-    /// </summary>
-    public const string QuarkusMicrocksCategoryLogLevelEnvVar = "QUARKUS_LOG_CATEGORY__IO_GITHUB_MICROCKS__LEVEL";
-
-    /// <summary>
-    /// Environment variable value for enabling DEBUG logging.
-    /// </summary>
-    public const string DebugLogLevel = "DEBUG";
 
     /// <summary>
     /// Enables DEBUG log level for Microcks async minion components inside the container.
@@ -159,7 +146,7 @@ public sealed class MicrocksAsyncMinionBuilder
     public MicrocksAsyncMinionBuilder WithDebugLogLevel()
     {
         return this
-            .WithEnvironment(QuarkusConsoleLogLevelEnvVar, DebugLogLevel)
-            .WithEnvironment(QuarkusMicrocksCategoryLogLevelEnvVar, DebugLogLevel);
+            .WithEnvironment(ConfigurationConstants.QuarkusConsoleLogLevelEnvVar, ConfigurationConstants.DebugLogLevel)
+            .WithEnvironment(ConfigurationConstants.QuarkusMicrocksCategoryLogLevelEnvVar, ConfigurationConstants.DebugLogLevel);
     }
 }
