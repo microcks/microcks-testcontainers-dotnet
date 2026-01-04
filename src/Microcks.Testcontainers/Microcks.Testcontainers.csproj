@@ -5,7 +5,7 @@
         <GenerateSBOM>true</GenerateSBOM>
     </PropertyGroup>
     <ItemGroup>
-		<PackageReference Include="Testcontainers" Version="4.9.0" />
+		<PackageReference Include="Testcontainers" Version="4.10.0" />
         <PackageReference Include="System.Net.Http.Json" Version="10.0.1" />
         <PackageReference Include="Microsoft.Sbom.Targets" Version="4.1.4">
             <PrivateAssets>all</PrivateAssets>
