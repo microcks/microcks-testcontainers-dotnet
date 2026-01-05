@@ -29,10 +29,12 @@ namespace Microcks.Testcontainers;
 /// </summary>
 public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotManager<MicrocksContainerEnsemble>
 {
-    private readonly MicrocksBuilder _microcksBuilder;
+    private MicrocksBuilder _microcksBuilder;
 
     private ContainerBuilder _postmanBuilder;
     private MicrocksAsyncMinionBuilder _asyncMinionBuilder;
+
+    private bool _debugLogLevelEnabled;
 
     /// <summary>
     /// Gets the Postman runtime container.
@@ -186,6 +188,11 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
             .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithImage(image);
 
+        if (this._debugLogLevelEnabled)
+        {
+            this._asyncMinionBuilder = this._asyncMinionBuilder.WithDebugLogLevel();
+        }
+
         return this;
     }
 
@@ -217,6 +224,24 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
 
         this._asyncMinionBuilder = (_asyncMinionBuilder ?? throw new NullReferenceException("MicrocksAsyncMinionBuilder is null"))
             .WithAmqpConnection(amqpConnection);
+
+        return this;
+    }
+
+    /// <summary>
+    /// Enables DEBUG log level for the containers of this ensemble.
+    /// </summary>
+    /// <remarks>
+    /// Applies to the main Microcks container (Spring) and, when the async feature is enabled,
+    /// to the async-minion container (Quarkus).
+    /// </remarks>
+    public MicrocksContainerEnsemble WithDebugLogLevel()
+    {
+        this._debugLogLevelEnabled = true;
+        this._microcksBuilder = this._microcksBuilder.WithDebugLogLevel();
+
+        // If async feature has already been enabled, apply immediately.
+        this._asyncMinionBuilder = this._asyncMinionBuilder?.WithDebugLogLevel();
 
         return this;
     }

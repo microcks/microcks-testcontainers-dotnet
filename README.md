@@ -221,6 +221,7 @@ await TestcontainersSettings.ExposeHostPortsAsync(ports)
     .ConfigureAwait(false);
 ```
 
+
 ### Advanced features with MicrocksContainersEnsemble
 
 The `MicrocksContainer` referenced above supports essential features of Microcks provided by the main Microcks container.
@@ -353,3 +354,18 @@ testResult.IsSuccess.Should().BeTrue();
 ```
 
 In addition, you can use the `GetEventMessagesForTestCaseAsync()` method to retrieve the events received during the test.
+
+#### Troubleshooting
+
+You can enable debug logs on the Microcks container by setting the debug log level and then retrieving the logs:
+
+```csharp
+MicrocksContainer container = new MicrocksBuilder()
+    .WithImage("quay.io/microcks/microcks-uber:1.13.0")
+    .WithDebugLogLevel()
+    .Build();
+await container.StartAsync();
+```
+
+The same .withDebugLogLevel() method is available on also MicrocksContainersEnsemble for enabling debug logs on all contained Microcks containers.
+```

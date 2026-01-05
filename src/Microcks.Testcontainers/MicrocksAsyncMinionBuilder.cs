@@ -18,6 +18,7 @@
 
 using DotNet.Testcontainers.Networks;
 using Microcks.Testcontainers.Connection;
+using Microcks.Testcontainers.Helpers;
 
 namespace Microcks.Testcontainers;
 
@@ -132,5 +133,20 @@ public sealed class MicrocksAsyncMinionBuilder
         };
 
         return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(new ContainerConfiguration(environments: environments)));
+    }
+
+
+    /// <summary>
+    /// Enables DEBUG log level for Microcks async minion components inside the container.
+    /// </summary>
+    /// <remarks>
+    /// This follows Microcks documentation for the Quarkus-based async-minion image.
+    /// It must be called before <see cref="Build"/> / container start.
+    /// </remarks>
+    public MicrocksAsyncMinionBuilder WithDebugLogLevel()
+    {
+        return this
+            .WithEnvironment(ConfigurationConstants.QuarkusConsoleLogLevelEnvVar, ConfigurationConstants.DebugLogLevelEnvVar)
+            .WithEnvironment(ConfigurationConstants.QuarkusMicrocksCategoryLogLevelEnvVar, ConfigurationConstants.DebugLogLevelEnvVar);
     }
 }

@@ -268,4 +268,12 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
 
         return this;
     }
+
+    /// <summary>
+    /// Enables DEBUG log level for Microcks components inside the container.
+    /// </summary>
+    public MicrocksBuilder WithDebugLogLevel()
+    {
+        return this.WithEnvironment(ConfigurationConstants.MicrocksLoggingLevelEnvVar, ConfigurationConstants.DebugLogLevelEnvVar);
+    }
 }
