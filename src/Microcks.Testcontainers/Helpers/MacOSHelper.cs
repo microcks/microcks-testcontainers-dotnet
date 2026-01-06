@@ -28,6 +28,9 @@ namespace Microcks.Testcontainers.Helpers;
 /// </summary>
 public static class MacOSHelper
 {
+    /// <summary>
+    /// Gets a value indicating whether the current process is running on macOS (Darwin) on Arm64.
+    /// </summary>
     public static bool IsMacOS { get; internal set; }
         = RuntimeInformation.ProcessArchitecture == Architecture.Arm64
           && RuntimeInformation.OSDescription.Contains("Darwin");

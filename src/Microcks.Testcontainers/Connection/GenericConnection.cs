@@ -17,12 +17,32 @@
 
 namespace Microcks.Testcontainers.Connection;
 
+/// <summary>
+/// Represents generic connection information (URL and optional credentials).
+/// </summary>
 public class GenericConnection
 {
+    /// <summary>
+    /// Gets the connection URL.
+    /// </summary>
     public string Url { get; }
+
+    /// <summary>
+    /// Gets the username used for authentication, if any.
+    /// </summary>
     public string Username { get; }
+
+    /// <summary>
+    /// Gets the password used for authentication, if any.
+    /// </summary>
     public string Password { get; }
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="GenericConnection"/> class.
+    /// </summary>
+    /// <param name="url">The connection URL.</param>
+    /// <param name="username">The username used for authentication, if any.</param>
+    /// <param name="password">The password used for authentication, if any.</param>
     public GenericConnection(string url, string username = null, string password = null)
     {
         Url = url;
