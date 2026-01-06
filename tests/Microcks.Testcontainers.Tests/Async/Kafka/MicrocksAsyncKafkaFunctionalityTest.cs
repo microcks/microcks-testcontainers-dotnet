@@ -256,8 +256,7 @@ public sealed class MicrocksAsyncKafkaFunctionalityTest
         {
             Network = new NetworkBuilder().Build();
 
-            KafkaContainer = new KafkaBuilder()
-                .WithImage("confluentinc/cp-kafka:7.8.0")
+            KafkaContainer = new KafkaBuilder("confluentinc/cp-kafka:7.8.0")
                 .WithNetwork(Network)
                 .WithNetworkAliases("kafka")
                 .WithListener("kafka:19092")

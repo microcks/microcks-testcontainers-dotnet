@@ -37,8 +37,7 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests
     {
         _fixture = fixture;
         var network = _fixture.Network;
-        _keycloak = new KeycloakBuilder()
-            .WithImage("quay.io/keycloak/keycloak:26.0.0")
+        _keycloak = new KeycloakBuilder("quay.io/keycloak/keycloak:26.0.0")
             .WithEnvironment(MacOSHelper.GetJavaOptions("JAVA_OPTS_APPEND"))
             .WithNetwork(network)
             .WithNetworkAliases("keycloak")

@@ -36,8 +36,7 @@ public class MicrocksAsyncAmqpFeatureTest : IAsyncLifetime
     {
         var cancellationToken = TestContext.Current.CancellationToken;
         _network = new NetworkBuilder().Build();
-        _rabbitMqContainer = new RabbitMqBuilder()
-            .WithImage("rabbitmq:3.13-management-alpine")
+        _rabbitMqContainer = new RabbitMqBuilder("rabbitmq:3.13-management-alpine")
             .WithNetwork(_network)
             .WithNetworkAliases("rabbitmq")
             .Build();

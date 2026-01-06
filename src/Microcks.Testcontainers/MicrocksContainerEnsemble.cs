@@ -185,8 +185,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithPostman(string image)
     {
-        this._postmanBuilder = new ContainerBuilder()
-            .WithImage(image)
+        this._postmanBuilder = new ContainerBuilder(image)
             .WithNetwork(this._network)
             .WithNetworkAliases("postman")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*postman-runtime wrapper listening on port.*"));
