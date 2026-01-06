@@ -40,15 +40,13 @@ public sealed class MicrocksContractTestingFixture : IAsyncLifetime
             .WithNetwork(Network)
             .Build();
 
-        BadImpl = new ContainerBuilder()
-            .WithImage(BAD_PASTRY_IMAGE)
+        BadImpl = new ContainerBuilder(BAD_PASTRY_IMAGE)
             .WithNetwork(Network)
             .WithNetworkAliases("bad-impl")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3001.*"))
             .Build();
 
-        GoodImpl = new ContainerBuilder()
-            .WithImage(GOOD_PASTRY_IMAGE)
+        GoodImpl = new ContainerBuilder(GOOD_PASTRY_IMAGE)
             .WithNetwork(Network)
             .WithNetworkAliases("good-impl")
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Example app listening on port 3002.*"))

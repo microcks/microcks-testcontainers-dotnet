@@ -59,8 +59,7 @@ public class MicrocksAsyncFeatureFixture : IAsyncLifetime
             .WithMainArtifacts("pastry-orders-asyncapi.yml")
             .WithAsyncFeature();
 
-        this.WsBadImplContainer = new ContainerBuilder()
-            .WithImage(BadPastryAsyncImage)
+        this.WsBadImplContainer = new ContainerBuilder(BadPastryAsyncImage)
             .WithNetwork(this.MicrocksContainerEnsemble.Network)
             .WithNetworkAliases("bad-impl")
             .WithExposedPort(4001)
@@ -70,8 +69,7 @@ public class MicrocksAsyncFeatureFixture : IAsyncLifetime
             )
             .Build();
 
-        this.WsGoodImplContainer = new ContainerBuilder()
-            .WithImage(GoodPastryAsyncImage)
+        this.WsGoodImplContainer = new ContainerBuilder(GoodPastryAsyncImage)
             .WithNetwork(this.MicrocksContainerEnsemble.Network)
             .WithNetworkAliases("good-impl")
             .WithExposedPort(4002)
