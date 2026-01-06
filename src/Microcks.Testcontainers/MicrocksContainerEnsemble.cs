@@ -53,6 +53,9 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
 
     private readonly INetwork _network;
 
+    /// <summary>
+    /// Gets the Docker network used by this ensemble.
+    /// </summary>
     public INetwork Network { get => this._network; }
 
 
@@ -100,36 +103,66 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         return this;
     }
 
+    /// <summary>
+    /// Configures the Microcks container ensemble with the specified main remote artifacts.
+    /// </summary>
+    /// <param name="mainRemoteArtifacts">An array of remote artifact URIs/locations to be used by the Microcks container.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithMainRemoteArtifacts(params string[] mainRemoteArtifacts)
     {
         this._microcksBuilder.WithMainRemoteArtifacts(mainRemoteArtifacts);
         return this;
     }
 
+    /// <summary>
+    /// Configures the Microcks container ensemble with the specified main remote artifacts.
+    /// </summary>
+    /// <param name="remoteArtifacts">The remote artifact definitions to be used by the Microcks container.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithMainRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
     {
         this._microcksBuilder.WithMainRemoteArtifacts(remoteArtifacts);
         return this;
     }
 
+    /// <summary>
+    /// Configures the Microcks container ensemble with the specified secondary artifacts.
+    /// </summary>
+    /// <param name="secondaryArtifacts">An array of secondary artifact file names to be used by the Microcks container.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSecondaryArtifacts(params string[] secondaryArtifacts)
     {
         this._microcksBuilder.WithSecondaryArtifacts(secondaryArtifacts);
         return this;
     }
 
+    /// <summary>
+    /// Configures the Microcks container ensemble with the specified secondary remote artifacts.
+    /// </summary>
+    /// <param name="remoteArtifacts">The remote artifact definitions to be used by the Microcks container.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSecondaryRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
     {
         this._microcksBuilder.WithSecondaryRemoteArtifacts(remoteArtifacts);
         return this;
     }
 
+    /// <summary>
+    /// Configures the Microcks container ensemble with the specified snapshots.
+    /// </summary>
+    /// <param name="snapshots">An array of snapshot file names to be loaded into the Microcks container.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSnapshots(params string[] snapshots)
     {
         this._microcksBuilder.WithSnapshots(snapshots);
         return this;
     }
 
+    /// <summary>
+    /// Configures the Microcks container ensemble with the specified secrets.
+    /// </summary>
+    /// <param name="secrets">The secrets to create in the Microcks container.</param>
+    /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSecrets(params Model.Secret[] secrets)
     {
         this._microcksBuilder.WithSecrets(secrets);
