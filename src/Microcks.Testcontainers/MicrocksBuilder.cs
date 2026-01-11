@@ -135,7 +135,6 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     protected override MicrocksBuilder Init()
     {
         return base.Init()
-            .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithImage(_microcksImage)
             .WithPortBinding(MicrocksHttpPort, true)
             .WithPortBinding(MicrocksGrpcPort, true)
