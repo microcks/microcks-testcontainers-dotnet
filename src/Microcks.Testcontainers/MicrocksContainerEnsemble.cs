@@ -17,6 +17,7 @@
 
 using System.Threading;
 using System.Threading.Tasks;
+using System.Diagnostics.CodeAnalysis;
 using DotNet.Testcontainers.Networks;
 using Microcks.Testcontainers.Connection;
 using Microcks.Testcontainers.Helpers;
@@ -75,6 +76,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// </summary>
     /// <param name="network">The network to be used by the Microcks container ensemble.</param>
     /// <param name="microcksImage">The name of the Microcks image to be used.</param>
+    [SuppressMessage("Security", "S5332", Justification = "HTTP is used intentionally for container-to-container communication in unit/integration tests on localhost")]
     public MicrocksContainerEnsemble(INetwork network, string microcksImage)
     {
         this._microcksImage = microcksImage;
@@ -116,11 +118,11 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <summary>
     /// Configures the Microcks container ensemble with the specified main remote artifacts.
     /// </summary>
-    /// <param name="remoteArtifacts">The remote artifact definitions to be used by the Microcks container.</param>
+    /// <param name="mainRemoteArtifacts">The remote artifact definitions to be used by the Microcks container.</param>
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
-    public MicrocksContainerEnsemble WithMainRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    public MicrocksContainerEnsemble WithMainRemoteArtifacts(params RemoteArtifact[] mainRemoteArtifacts)
     {
-        this._microcksBuilder.WithMainRemoteArtifacts(remoteArtifacts);
+        this._microcksBuilder.WithMainRemoteArtifacts(mainRemoteArtifacts);
         return this;
     }
 
@@ -138,11 +140,11 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <summary>
     /// Configures the Microcks container ensemble with the specified secondary remote artifacts.
     /// </summary>
-    /// <param name="remoteArtifacts">The remote artifact definitions to be used by the Microcks container.</param>
+    /// <param name="secondaryRemoteArtifacts">The remote artifact definitions to be used by the Microcks container.</param>
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
-    public MicrocksContainerEnsemble WithSecondaryRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    public MicrocksContainerEnsemble WithSecondaryRemoteArtifacts(params RemoteArtifact[] secondaryRemoteArtifacts)
     {
-        this._microcksBuilder.WithSecondaryRemoteArtifacts(remoteArtifacts);
+        this._microcksBuilder.WithSecondaryRemoteArtifacts(secondaryRemoteArtifacts);
         return this;
     }
 
@@ -237,7 +239,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         // Ensure the asynchronous feature is enabled.
         this.WithAsyncFeature();
 
-        this._asyncMinionBuilder = (_asyncMinionBuilder ?? throw new NullReferenceException("MicrocksAsyncMinionBuilder is null"))
+        this._asyncMinionBuilder = (_asyncMinionBuilder ?? throw new InvalidOperationException("MicrocksAsyncMinionBuilder is null"))
             .WithKafkaConnection(kafkaConnection);
 
         return this;
@@ -253,7 +255,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         // Ensure the asynchronous feature is enabled.
         this.WithAsyncFeature();
 
-        this._asyncMinionBuilder = (_asyncMinionBuilder ?? throw new NullReferenceException("MicrocksAsyncMinionBuilder is null"))
+        this._asyncMinionBuilder = (_asyncMinionBuilder ?? throw new InvalidOperationException("MicrocksAsyncMinionBuilder is null"))
             .WithAmqpConnection(amqpConnection);
 
         return this;
@@ -322,5 +324,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         {
             await this.MicrocksContainer.DisposeAsync();
         }
+        
+        GC.SuppressFinalize(this);
     }
 }

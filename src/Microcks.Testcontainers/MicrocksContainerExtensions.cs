@@ -21,6 +21,7 @@ using System.Net;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Net.Mime;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -34,7 +35,6 @@ namespace Microcks.Testcontainers;
 /// </summary>
 public static class MicrocksContainerExtensions
 {
-
     private static string _metricsAPIDatePattern = "yyyyMMdd";
 
     /// <summary>
@@ -45,7 +45,7 @@ public static class MicrocksContainerExtensions
     {
         DefaultRequestHeaders =
         {
-            Accept = { MediaTypeWithQualityHeaderValue.Parse("application/json") },
+            Accept = { MediaTypeWithQualityHeaderValue.Parse(MediaTypeNames.Application.Json) },
             CacheControl = CacheControlHeaderValue.Parse("no-cache")
         }
     });
@@ -64,7 +64,7 @@ public static class MicrocksContainerExtensions
         this MicrocksContainer container, TestRequest testRequest, CancellationToken cancellationToken = default)
     {
         string httpEndpoint = container.GetHttpEndpoint() + "api/tests";
-        var content = new StringContent(JsonSerializer.Serialize(testRequest), Encoding.UTF8, "application/json");
+        var content = new StringContent(JsonSerializer.Serialize(testRequest), Encoding.UTF8, MediaTypeNames.Application.Json);
         var responseMessage = await Client.PostAsync(httpEndpoint, content, cancellationToken);
 
         if (responseMessage.StatusCode == HttpStatusCode.Created)
@@ -87,14 +87,14 @@ public static class MicrocksContainerExtensions
             {
                 container.Logger.LogWarning(
                     taskCanceledException,
-                    "Test timeout reached, stopping polling for test {testEndpoint}", testRequest.TestEndpoint);
+                    "Test timeout reached, stopping polling for test {TestEndpoint}", testRequest.TestEndpoint);
             }
 
             return await RefreshTestResultAsync(httpEndpoint, testResultId, cancellationToken);
         }
         else
         {
-            throw new Exception("Couldn't launch on new test on Microcks. Please check Microcks container logs");
+            throw new InvalidOperationException("Couldn't launch new test on Microcks. Please check Microcks container logs");
         }
     }
 
@@ -135,17 +135,19 @@ public static class MicrocksContainerExtensions
         var result = await container.UploadFileToMicrocksAsync(artifact, url, cancellationToken);
         if (result.StatusCode != HttpStatusCode.Created)
         {
-            throw new Exception($"Artifact has not been correctly imported: {result.StatusCode}");
+            throw new InvalidOperationException($"Artifact has not been correctly imported: {result.StatusCode}");
         }
-        container.Logger.LogInformation($"Artifact {artifact} has been imported");
+        container.Logger.LogInformation("Artifact {ArtifactPath} has been imported", artifact);
     }
 
     internal static async Task<HttpResponseMessage> UploadFileToMicrocksAsync(this MicrocksContainer container, string filepath, string url, CancellationToken cancellationToken = default)
     {
+        var fileBytes = await File.ReadAllBytesAsync(filepath, cancellationToken);
+        
         using (var form = new MultipartFormDataContent())
         {
-            using var snapContent = new ByteArrayContent(File.ReadAllBytes(filepath));
-            snapContent.Headers.ContentType = MediaTypeHeaderValue.Parse("application/json");
+            using var snapContent = new ByteArrayContent(fileBytes);
+            snapContent.Headers.ContentType = MediaTypeHeaderValue.Parse(MediaTypeNames.Application.Json);
             form.Add(snapContent, "file", Path.GetFileName(filepath));
 
             return await Client.PostAsync(url, form, cancellationToken);
@@ -159,9 +161,9 @@ public static class MicrocksContainerExtensions
 
         if (result.StatusCode != HttpStatusCode.Created)
         {
-            throw new Exception($"Snapshot has not been correctly imported: {result.StatusCode}");
+            throw new InvalidOperationException($"Snapshot has not been correctly imported: {result.StatusCode}");
         }
-        container.Logger.LogInformation($"Snapshot {snapshot} has been imported");
+        container.Logger.LogInformation("Snapshot {SnapshotPath} has been imported", snapshot);
     }
 
     internal static async Task CreateSecretAsync(this MicrocksContainer container, Model.Secret secret, CancellationToken cancellationToken = default)
@@ -173,9 +175,9 @@ public static class MicrocksContainerExtensions
 
         if (result.StatusCode != HttpStatusCode.Created)
         {
-            throw new Exception("Secret has not been correctly created");
+            throw new InvalidOperationException("Secret has not been correctly created");
         }
-        container.Logger.LogInformation($"Secret {secret.Name} has been created");
+        container.Logger.LogInformation("Secret {SecretName} has been created", secret.Name);
     }
 
     internal static async Task DownloadArtifactAsync(this MicrocksContainer container, RemoteArtifact remoteArtifact, bool main, CancellationToken cancellationToken = default)
@@ -190,9 +192,9 @@ public static class MicrocksContainerExtensions
 
         if (result.StatusCode != HttpStatusCode.Created)
         {
-            throw new Exception("Artifact has not been correctly downloaded");
+            throw new InvalidOperationException("Artifact has not been correctly downloaded");
         }
-        container.Logger.LogInformation($"Artifact {remoteArtifact.Url} has been downloaded");
+        container.Logger.LogInformation("Artifact {ArtifactUrl} has been downloaded", remoteArtifact.Url);
     }
 
     /// <summary>

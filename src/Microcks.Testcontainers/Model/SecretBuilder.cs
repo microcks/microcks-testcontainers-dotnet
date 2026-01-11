@@ -76,7 +76,7 @@ public class SecretBuilder
     {
         if (_name == null)
         {
-            throw new ArgumentNullException("Name is required");
+            throw new InvalidOperationException("Name is required");
         }
 
         return new Secret()

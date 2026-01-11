@@ -64,11 +64,16 @@ public sealed class MicrocksContractTestingFunctionalityWithOAuth2Tests
             Path = "/api/keycloak/config"
         };
 
-        Given()
+        var response = Given()
             .When()
             .Get(uriBuilder.ToString())
             .Then()
-            .StatusCode(HttpStatusCode.OK);
+            .StatusCode(HttpStatusCode.OK)
+            .Extract()
+            .Response();
+
+        Assert.NotNull(response);
+        Assert.NotEmpty(response.Content.Headers.ContentType?.ToString());
     }
 
     [Fact]
