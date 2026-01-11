@@ -1,4 +1,4 @@
-﻿on:
+on:
   workflow_call:
     inputs:
       runs-on:
@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: 📊 Publish Test Report
-        uses: dorny/test-reporter@v1.9.1
+        uses: dorny/test-reporter@v2.5.0
         with:
           artifact: ${{ inputs.runs-on }}
           name: report (${{ inputs.runs-on }})
