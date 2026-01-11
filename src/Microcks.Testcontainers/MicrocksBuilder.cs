@@ -24,9 +24,14 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     IArtifactAndSnapshotManager<MicrocksBuilder>
 {
     /// <summary>
-    /// Image name for the Microcks container.
+    /// Default image name for the Microcks container.
     /// </summary>
     public const string MicrocksImage = "quay.io/microcks/microcks-uber";
+
+    /// <summary>
+    /// Image name for the Microcks container.
+    /// </summary>
+    private string _microcksImage = MicrocksImage;
 
     /// <summary>
     /// HTTP port for the Microcks container.
@@ -46,6 +51,16 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     private List<RemoteArtifact> _secondaryRemoteArtifacts;
 
     private List<Model.Secret> _secrets;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="MicrocksBuilder" /> class.
+    /// </summary>
+    /// <param name="image">The Docker image to use.</param>
+    public MicrocksBuilder(string image) 
+        : this()
+    {
+        _microcksImage = image;
+    }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MicrocksBuilder" /> class.
