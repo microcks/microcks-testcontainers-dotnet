@@ -80,12 +80,11 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         this._microcksImage = microcksImage;
         this._network = network;
 
-        this._microcksBuilder = new MicrocksBuilder()
+        this._microcksBuilder = new MicrocksBuilder(this._microcksImage)
             .WithNetwork(this._network)
             .WithNetworkAliases("microcks")
             .WithExposedPort(MicrocksBuilder.MicrocksHttpPort)
             .WithExposedPort(MicrocksBuilder.MicrocksGrpcPort)
-            .WithImage(this._microcksImage)
             .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithEnvironment("POSTMAN_RUNNER_URL", "http://postman:3000")
             .WithEnvironment("TEST_CALLBACK_URL", "http://microcks:" + MicrocksBuilder.MicrocksHttpPort)
