@@ -15,6 +15,7 @@
 //
 //
 
+using System.Diagnostics.CodeAnalysis;
 
 namespace Microcks.Testcontainers;
 
@@ -39,6 +40,7 @@ public sealed class MicrocksAsyncMinionContainer : DockerContainer
     /// <param name="version">The version of the service.</param>
     /// <param name="operationName">The name of the operation, which may start with SUBSCRIBE or PUBLISH.</param>
     /// <returns>A formatted Kafka mock topic name.</returns>
+    [SuppressMessage("Style", "S2325", Justification = "Kept as instance method for backward compatibility")]
     public string GetKafkaMockTopic(string service, string version, string operationName)
     {
         operationName = ExtractOperationName(operationName);
@@ -68,7 +70,7 @@ public sealed class MicrocksAsyncMinionContainer : DockerContainer
     /// </summary>
     /// <param name="operationName">operationName may start with SUBSCRIBE or PUBLISH.</param>
     /// <returns>The extracted operation name.</returns>
-    private string ExtractOperationName(string operationName)
+    private static string ExtractOperationName(string operationName)
     {
         if (operationName.Contains(' '))
         {

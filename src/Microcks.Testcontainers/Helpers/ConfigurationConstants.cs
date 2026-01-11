@@ -20,7 +20,7 @@ namespace Microcks.Testcontainers.Helpers;
 /// <summary>
 /// Configuration constants for Microcks Testcontainers.
 /// </summary>
-public class ConfigurationConstants
+public static class ConfigurationConstants
 {
     /// <summary>
     /// Environment variable name used to configure Microcks logging level for the Microcks package.

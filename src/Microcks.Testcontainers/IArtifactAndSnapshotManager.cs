@@ -20,7 +20,7 @@ namespace Microcks.Testcontainers;
 /// <summary>
 /// Artifacts management interface for fluent approach.
 /// </summary>
-public interface IArtifactAndSnapshotManager<T>
+public interface IArtifactAndSnapshotManager<out T>
 {
     /// <summary>
     /// Add main/primary artifacts.

@@ -31,7 +31,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <summary>
     /// Image name for the Microcks container.
     /// </summary>
-    private string _microcksImage = MicrocksImage;
+    private readonly string _microcksImage = MicrocksImage;
 
     /// <summary>
     /// HTTP port for the Microcks container.
@@ -136,7 +136,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     {
         return base.Init()
             .WithEnvironment(MacOSHelper.GetJavaOptions())
-            .WithImage(MicrocksImage)
+            .WithImage(_microcksImage)
             .WithPortBinding(MicrocksHttpPort, true)
             .WithPortBinding(MicrocksGrpcPort, true)
             .WithWaitStrategy(Wait.ForUnixContainer().UntilMessageIsLogged(".*Started MicrocksApplication.*"));
@@ -182,15 +182,15 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <summary>
     /// Set the main remote artifacts to download into the Microcks container.
     /// </summary>
-    /// <param name="remoteArtifacts"></param>
+    /// <param name="mainRemoteArtifacts"></param>
     /// <returns></returns>
-    public MicrocksBuilder WithMainRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    public MicrocksBuilder WithMainRemoteArtifacts(params RemoteArtifact[] mainRemoteArtifacts)
     {
         if (_mainRemoteArtifacts == null)
         {
-            _mainRemoteArtifacts = new List<RemoteArtifact>(remoteArtifacts.Length);
+            _mainRemoteArtifacts = new List<RemoteArtifact>(mainRemoteArtifacts.Length);
         }
-        _mainRemoteArtifacts.AddRange(remoteArtifacts);
+        _mainRemoteArtifacts.AddRange(mainRemoteArtifacts);
 
         return this;
     }
@@ -198,15 +198,15 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <summary>
     /// Set the main remote artifacts to download into the Microcks container.
     /// </summary>
-    /// <param name="urls"></param>
+    /// <param name="mainRemoteArtifacts"></param>
     /// <returns></returns>
-    public MicrocksBuilder WithMainRemoteArtifacts(params string[] urls)
+    public MicrocksBuilder WithMainRemoteArtifacts(params string[] mainRemoteArtifacts)
     {
         if (_mainRemoteArtifacts == null)
         {
-            _mainRemoteArtifacts = new List<RemoteArtifact>(urls.Length);
+            _mainRemoteArtifacts = new List<RemoteArtifact>(mainRemoteArtifacts.Length);
         }
-        _mainRemoteArtifacts.AddRange(urls.Select(url => new RemoteArtifact(url, null)));
+        _mainRemoteArtifacts.AddRange(mainRemoteArtifacts.Select(url => new RemoteArtifact(url, null)));
 
         return this;
     }
@@ -233,15 +233,15 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <summary>
     /// Set the secondary remote artifacts to download into the Microcks container.
     /// </summary>
-    /// <param name="remoteArtifacts"></param>
+    /// <param name="secondaryRemoteArtifacts"></param>
     /// <returns></returns>
-    public MicrocksBuilder WithSecondaryRemoteArtifacts(params RemoteArtifact[] remoteArtifacts)
+    public MicrocksBuilder WithSecondaryRemoteArtifacts(params RemoteArtifact[] secondaryRemoteArtifacts)
     {
         if (_secondaryRemoteArtifacts == null)
         {
-            _secondaryRemoteArtifacts = new List<RemoteArtifact>(remoteArtifacts.Length);
+            _secondaryRemoteArtifacts = new List<RemoteArtifact>(secondaryRemoteArtifacts.Length);
         }
-        _secondaryRemoteArtifacts.AddRange(remoteArtifacts);
+        _secondaryRemoteArtifacts.AddRange(secondaryRemoteArtifacts);
 
         return this;
     }

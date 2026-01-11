@@ -100,7 +100,7 @@ public sealed class MicrocksSecretCreationTests
     [Fact]
     public void ShouldThrowExceptionWhenNameNotDefined()
     {
-        Assert.Throws<ArgumentNullException>(() => new SecretBuilder().Build());
+        Assert.Throws<InvalidOperationException>(() => new SecretBuilder().Build());
     }
 
 
@@ -116,6 +116,7 @@ public sealed class MicrocksSecretCreationTests
         public async ValueTask DisposeAsync()
         {
             await _microcksContainer.DisposeAsync();
+            GC.SuppressFinalize(this);
         }
 
         public async ValueTask InitializeAsync()
