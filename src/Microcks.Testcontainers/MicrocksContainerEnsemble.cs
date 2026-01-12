@@ -87,7 +87,6 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
             .WithNetworkAliases("microcks")
             .WithExposedPort(MicrocksBuilder.MicrocksHttpPort)
             .WithExposedPort(MicrocksBuilder.MicrocksGrpcPort)
-            .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithEnvironment("POSTMAN_RUNNER_URL", "http://postman:3000")
             .WithEnvironment("TEST_CALLBACK_URL", "http://microcks:" + MicrocksBuilder.MicrocksHttpPort)
             .WithEnvironment("ASYNC_MINION_URL", "http://microcks-async-minion:" + MicrocksAsyncMinionBuilder.MicrocksAsyncMinionHttpPort);
@@ -218,7 +217,6 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         }
 
         this._asyncMinionBuilder = new MicrocksAsyncMinionBuilder(this._network)
-            .WithEnvironment(MacOSHelper.GetJavaOptions())
             .WithImage(image);
 
         if (this._debugLogLevelEnabled)
