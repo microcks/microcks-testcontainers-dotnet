@@ -21,6 +21,6 @@
   <ItemGroup>
     <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="" />
 	<None Include="$(MSBuildThisFileDirectory)LICENSE" Pack="true" PackagePath="" />
-	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.102" PrivateAssets="All"/>
+	<PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.103" PrivateAssets="All"/>
   </ItemGroup>	
 </Project>
