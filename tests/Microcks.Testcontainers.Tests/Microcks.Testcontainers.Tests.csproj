@@ -10,7 +10,7 @@
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.3.0" />
     <PackageReference Include="coverlet.collector" Version="8.0.0" />
     <PackageReference Include="RabbitMQ.Client" Version="7.2.1" />
-    <PackageReference Include="RestAssured.Net" Version="4.10.0" />
+    <PackageReference Include="RestAssured.Net" Version="5.0.0" />
     <PackageReference Include="Confluent.Kafka" Version="2.13.2" />
     <PackageReference Include="TestContainers.Kafka" Version="4.10.0" />
     <PackageReference Include="TestContainers.Keycloak" Version="4.10.0" />
