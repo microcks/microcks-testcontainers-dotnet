@@ -33,7 +33,6 @@ public sealed class MicrocksAsyncMinionBuilder
 
     private const string MicrocksAsyncMinionFullImageName = "quay.io/microcks/microcks-uber-async-minion";
 
-    private readonly HashSet<string> _extraProtocols = [];
     private readonly INetwork _network;
 
     /// <inheritdoc />
@@ -64,6 +63,14 @@ public sealed class MicrocksAsyncMinionBuilder
     public override MicrocksAsyncMinionContainer Build()
     {
         Validate();
+
+        var protocols = DockerResourceConfiguration.ExtraProtocols;
+        if (protocols != null && protocols.Any())
+        {
+            var asyncProtocols = "," + string.Join(",", protocols.Distinct());
+            return new MicrocksAsyncMinionContainer(
+                WithEnvironment("ASYNC_PROTOCOLS", asyncProtocols).DockerResourceConfiguration);
+        }
 
         return new MicrocksAsyncMinionContainer(DockerResourceConfiguration);
     }
@@ -106,14 +113,8 @@ public sealed class MicrocksAsyncMinionBuilder
     /// <returns>The updated MicrocksAsyncMinionBuilder instance.</returns>
     public MicrocksAsyncMinionBuilder WithKafkaConnection(KafkaConnection kafkaConnection)
     {
-        _extraProtocols.Add("KAFKA");
-        var environments = new Dictionary<string, string>
-        {
-            { "ASYNC_PROTOCOLS", $",{string.Join(",", _extraProtocols)}" },
-            { "KAFKA_BOOTSTRAP_SERVER", kafkaConnection.BootstrapServers },
-        };
-
-        return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(new ContainerConfiguration(environments: environments)));
+        return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(extraProtocols: new[] { "KAFKA" }))
+            .WithEnvironment("KAFKA_BOOTSTRAP_SERVER", kafkaConnection.BootstrapServers);
     }
 
     /// <summary>
@@ -123,16 +124,10 @@ public sealed class MicrocksAsyncMinionBuilder
     /// <returns>The updated MicrocksAsyncMinionBuilder instance.</returns>
     public MicrocksAsyncMinionBuilder WithAmqpConnection(GenericConnection amqpConnection)
     {
-        _extraProtocols.Add("AMQP");
-        var environments = new Dictionary<string, string>
-        {
-            { "ASYNC_PROTOCOLS", $",{string.Join(",", _extraProtocols)}" },
-            { "AMQP_SERVER", amqpConnection.Url },
-            { "AMQP_USERNAME", amqpConnection.Username },
-            { "AMQP_PASSWORD", amqpConnection.Password },
-        };
-
-        return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(new ContainerConfiguration(environments: environments)));
+        return Merge(DockerResourceConfiguration, new MicrocksAsyncMinionConfiguration(extraProtocols: new[] { "AMQP" }))
+            .WithEnvironment("AMQP_SERVER", amqpConnection.Url)
+            .WithEnvironment("AMQP_USERNAME", amqpConnection.Username)
+            .WithEnvironment("AMQP_PASSWORD", amqpConnection.Password);
     }
 
 

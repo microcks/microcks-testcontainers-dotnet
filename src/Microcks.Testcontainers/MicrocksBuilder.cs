@@ -43,23 +43,15 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// </summary>
     public const ushort MicrocksGrpcPort = 9090;
 
-    private List<string> _snapshots;
-
-    private List<string> _mainArtifacts;
-    private List<string> _secondaryArtifacts;
-    private List<RemoteArtifact> _mainRemoteArtifacts;
-    private List<RemoteArtifact> _secondaryRemoteArtifacts;
-
-    private List<Model.Secret> _secrets;
-
     /// <summary>
     /// Initializes a new instance of the <see cref="MicrocksBuilder" /> class.
     /// </summary>
     /// <param name="image">The Docker image to use.</param>
-    public MicrocksBuilder(string image) 
-        : this()
+    public MicrocksBuilder(string image)
+        : this(new MicrocksConfiguration())
     {
         _microcksImage = image;
+        DockerResourceConfiguration = Init().DockerResourceConfiguration;
     }
 
     /// <summary>
@@ -97,36 +89,54 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
 
     private void ContainerStarted(MicrocksContainer container)
     {
+        var configuration = DockerResourceConfiguration;
+
         // Load snapshots before anything else.
-        if (_snapshots != null && _snapshots.Any())
+        if (configuration.Snapshots != null && configuration.Snapshots.Any())
         {
-            _snapshots.ForEach(snapshot => container.ImportSnapshotAsync(snapshot).GetAwaiter().GetResult());
+            foreach (var snapshot in configuration.Snapshots)
+            {
+                container.ImportSnapshotAsync(snapshot).GetAwaiter().GetResult();
+            }
         }
         // Load secrets before remote artifacts as they may be needed for authentication.
-        if (_secrets != null && _secrets.Any())
+        if (configuration.Secrets != null && configuration.Secrets.Any())
         {
-            _secrets.ForEach(secret => container.CreateSecretAsync(secret).GetAwaiter().GetResult());
+            foreach (var secret in configuration.Secrets)
+            {
+                container.CreateSecretAsync(secret).GetAwaiter().GetResult();
+            }
         }
         // Load remote artifacts before local ones.
-        if (_mainRemoteArtifacts != null && _mainRemoteArtifacts.Any())
+        if (configuration.MainRemoteArtifacts != null && configuration.MainRemoteArtifacts.Any())
         {
-            _mainRemoteArtifacts.ForEach(remoteArtifact =>
-                container.DownloadArtifactAsync(remoteArtifact, main: true).GetAwaiter().GetResult());
+            foreach (var remoteArtifact in configuration.MainRemoteArtifacts)
+            {
+                container.DownloadArtifactAsync(remoteArtifact, main: true).GetAwaiter().GetResult();
+            }
         }
-        if (_secondaryRemoteArtifacts != null && _secondaryRemoteArtifacts.Any())
+        if (configuration.SecondaryRemoteArtifacts != null && configuration.SecondaryRemoteArtifacts.Any())
         {
-            _secondaryRemoteArtifacts.ForEach(remoteArtifact =>
-                container.DownloadArtifactAsync(remoteArtifact, main: false).GetAwaiter().GetResult());
+            foreach (var remoteArtifact in configuration.SecondaryRemoteArtifacts)
+            {
+                container.DownloadArtifactAsync(remoteArtifact, main: false).GetAwaiter().GetResult();
+            }
         }
 
-        if (_mainArtifacts != null && _mainArtifacts.Any())
+        if (configuration.MainArtifacts != null && configuration.MainArtifacts.Any())
         {
-            _mainArtifacts.ForEach(container.ImportAsMainArtifact);
+            foreach (var artifact in configuration.MainArtifacts)
+            {
+                container.ImportAsMainArtifact(artifact);
+            }
         }
 
-        if (_secondaryArtifacts != null && _secondaryArtifacts.Any())
+        if (configuration.SecondaryArtifacts != null && configuration.SecondaryArtifacts.Any())
         {
-            _secondaryArtifacts.ForEach(container.ImportAsSecondaryArtifact);
+            foreach (var artifact in configuration.SecondaryArtifacts)
+            {
+                container.ImportAsSecondaryArtifact(artifact);
+            }
         }
     }
 
@@ -166,16 +176,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <returns></returns>
     public MicrocksBuilder WithSnapshots(params string[] snapshots)
     {
-        if (_snapshots == null)
-        {
-            _snapshots = new List<string>(snapshots);
-        }
-        else
-        {
-            _snapshots.AddRange(snapshots);
-        }
-
-        return this;
+        return Merge(DockerResourceConfiguration, new MicrocksConfiguration(snapshots: snapshots));
     }
 
     /// <summary>
@@ -185,13 +186,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <returns></returns>
     public MicrocksBuilder WithMainRemoteArtifacts(params RemoteArtifact[] mainRemoteArtifacts)
     {
-        if (_mainRemoteArtifacts == null)
-        {
-            _mainRemoteArtifacts = new List<RemoteArtifact>(mainRemoteArtifacts.Length);
-        }
-        _mainRemoteArtifacts.AddRange(mainRemoteArtifacts);
-
-        return this;
+        return Merge(DockerResourceConfiguration, new MicrocksConfiguration(mainRemoteArtifacts: mainRemoteArtifacts));
     }
 
     /// <summary>
@@ -201,13 +196,8 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <returns></returns>
     public MicrocksBuilder WithMainRemoteArtifacts(params string[] mainRemoteArtifacts)
     {
-        if (_mainRemoteArtifacts == null)
-        {
-            _mainRemoteArtifacts = new List<RemoteArtifact>(mainRemoteArtifacts.Length);
-        }
-        _mainRemoteArtifacts.AddRange(mainRemoteArtifacts.Select(url => new RemoteArtifact(url, null)));
-
-        return this;
+        return Merge(DockerResourceConfiguration, new MicrocksConfiguration(
+            mainRemoteArtifacts: mainRemoteArtifacts.Select(url => new RemoteArtifact(url, null))));
     }
 
     /// <summary>
@@ -217,16 +207,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <returns></returns>
     public MicrocksBuilder WithMainArtifacts(params string[] mainArtifacts)
     {
-        if (_mainArtifacts == null)
-        {
-            _mainArtifacts = new List<string>(mainArtifacts);
-        }
-        else
-        {
-            _mainArtifacts.AddRange(mainArtifacts);
-        }
-
-        return this;
+        return Merge(DockerResourceConfiguration, new MicrocksConfiguration(mainArtifacts: mainArtifacts));
     }
 
     /// <summary>
@@ -236,13 +217,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <returns></returns>
     public MicrocksBuilder WithSecondaryRemoteArtifacts(params RemoteArtifact[] secondaryRemoteArtifacts)
     {
-        if (_secondaryRemoteArtifacts == null)
-        {
-            _secondaryRemoteArtifacts = new List<RemoteArtifact>(secondaryRemoteArtifacts.Length);
-        }
-        _secondaryRemoteArtifacts.AddRange(secondaryRemoteArtifacts);
-
-        return this;
+        return Merge(DockerResourceConfiguration, new MicrocksConfiguration(secondaryRemoteArtifacts: secondaryRemoteArtifacts));
     }
 
     /// <summary>
@@ -252,16 +227,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <returns></returns>
     public MicrocksBuilder WithSecondaryArtifacts(params string[] secondaryArtifacts)
     {
-        if (_secondaryArtifacts == null)
-        {
-            _secondaryArtifacts = new List<string>(secondaryArtifacts);
-        }
-        else
-        {
-            _secondaryArtifacts.AddRange(secondaryArtifacts);
-        }
-
-        return this;
+        return Merge(DockerResourceConfiguration, new MicrocksConfiguration(secondaryArtifacts: secondaryArtifacts));
     }
 
     /// <summary>
@@ -271,16 +237,7 @@ public sealed class MicrocksBuilder : ContainerBuilder<MicrocksBuilder, Microcks
     /// <returns></returns>
     public MicrocksBuilder WithSecrets(params Model.Secret[] secrets)
     {
-        if (_secrets == null)
-        {
-            _secrets = new List<Model.Secret>(secrets);
-        }
-        else
-        {
-            _secrets.AddRange(secrets);
-        }
-
-        return this;
+        return Merge(DockerResourceConfiguration, new MicrocksConfiguration(secrets: secrets));
     }
 
     /// <summary>

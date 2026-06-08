@@ -99,7 +99,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithMainArtifacts(params string[] mainArtifacts)
     {
-        this._microcksBuilder.WithMainArtifacts(mainArtifacts);
+        this._microcksBuilder = this._microcksBuilder.WithMainArtifacts(mainArtifacts);
         return this;
     }
 
@@ -110,7 +110,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithMainRemoteArtifacts(params string[] mainRemoteArtifacts)
     {
-        this._microcksBuilder.WithMainRemoteArtifacts(mainRemoteArtifacts);
+        this._microcksBuilder = this._microcksBuilder.WithMainRemoteArtifacts(mainRemoteArtifacts);
         return this;
     }
 
@@ -121,7 +121,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithMainRemoteArtifacts(params RemoteArtifact[] mainRemoteArtifacts)
     {
-        this._microcksBuilder.WithMainRemoteArtifacts(mainRemoteArtifacts);
+        this._microcksBuilder = this._microcksBuilder.WithMainRemoteArtifacts(mainRemoteArtifacts);
         return this;
     }
 
@@ -132,7 +132,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSecondaryArtifacts(params string[] secondaryArtifacts)
     {
-        this._microcksBuilder.WithSecondaryArtifacts(secondaryArtifacts);
+        this._microcksBuilder = this._microcksBuilder.WithSecondaryArtifacts(secondaryArtifacts);
         return this;
     }
 
@@ -143,7 +143,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSecondaryRemoteArtifacts(params RemoteArtifact[] secondaryRemoteArtifacts)
     {
-        this._microcksBuilder.WithSecondaryRemoteArtifacts(secondaryRemoteArtifacts);
+        this._microcksBuilder = this._microcksBuilder.WithSecondaryRemoteArtifacts(secondaryRemoteArtifacts);
         return this;
     }
 
@@ -154,7 +154,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSnapshots(params string[] snapshots)
     {
-        this._microcksBuilder.WithSnapshots(snapshots);
+        this._microcksBuilder = this._microcksBuilder.WithSnapshots(snapshots);
         return this;
     }
 
@@ -165,7 +165,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// <returns>The updated <see cref="MicrocksContainerEnsemble"/> instance.</returns>
     public MicrocksContainerEnsemble WithSecrets(params Model.Secret[] secrets)
     {
-        this._microcksBuilder.WithSecrets(secrets);
+        this._microcksBuilder = this._microcksBuilder.WithSecrets(secrets);
         return this;
     }
 

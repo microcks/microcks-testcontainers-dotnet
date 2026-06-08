@@ -23,9 +23,10 @@ public sealed class MicrocksAsyncMinionConfiguration : ContainerConfiguration
     /// <summary>
     /// Initializes a new instance of the <see cref="MicrocksAsyncMinionConfiguration" /> class.
     /// </summary>
-    /// <param name="config">The Microcks config.</param>
-    public MicrocksAsyncMinionConfiguration(object config = null)
+    /// <param name="extraProtocols">The extra async protocols (e.g. KAFKA, AMQP) to enable.</param>
+    public MicrocksAsyncMinionConfiguration(IEnumerable<string> extraProtocols = null)
     {
+        ExtraProtocols = extraProtocols;
     }
 
     /// <summary>
@@ -63,5 +64,11 @@ public sealed class MicrocksAsyncMinionConfiguration : ContainerConfiguration
     public MicrocksAsyncMinionConfiguration(MicrocksAsyncMinionConfiguration oldValue, MicrocksAsyncMinionConfiguration newValue)
         : base(oldValue, newValue)
     {
+        ExtraProtocols = BuildConfiguration.Combine(oldValue.ExtraProtocols, newValue.ExtraProtocols);
     }
+
+    /// <summary>
+    /// Gets the extra async protocols (e.g. KAFKA, AMQP) to enable on the async minion.
+    /// </summary>
+    public IEnumerable<string> ExtraProtocols { get; }
 }
