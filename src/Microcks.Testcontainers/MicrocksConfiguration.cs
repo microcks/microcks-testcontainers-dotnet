@@ -23,9 +23,26 @@ public sealed class MicrocksConfiguration : ContainerConfiguration
     /// <summary>
     /// Initializes a new instance of the <see cref="MicrocksConfiguration" /> class.
     /// </summary>
-    /// <param name="config">The Microcks config.</param>
-    public MicrocksConfiguration(object config = null)
+    /// <param name="snapshots">The snapshots to import.</param>
+    /// <param name="mainArtifacts">The main artifacts to import.</param>
+    /// <param name="secondaryArtifacts">The secondary artifacts to import.</param>
+    /// <param name="mainRemoteArtifacts">The main remote artifacts to download.</param>
+    /// <param name="secondaryRemoteArtifacts">The secondary remote artifacts to download.</param>
+    /// <param name="secrets">The secrets to create.</param>
+    public MicrocksConfiguration(
+        IEnumerable<string> snapshots = null,
+        IEnumerable<string> mainArtifacts = null,
+        IEnumerable<string> secondaryArtifacts = null,
+        IEnumerable<RemoteArtifact> mainRemoteArtifacts = null,
+        IEnumerable<RemoteArtifact> secondaryRemoteArtifacts = null,
+        IEnumerable<Model.Secret> secrets = null)
     {
+        Snapshots = snapshots;
+        MainArtifacts = mainArtifacts;
+        SecondaryArtifacts = secondaryArtifacts;
+        MainRemoteArtifacts = mainRemoteArtifacts;
+        SecondaryRemoteArtifacts = secondaryRemoteArtifacts;
+        Secrets = secrets;
     }
 
     /// <summary>
@@ -63,5 +80,41 @@ public sealed class MicrocksConfiguration : ContainerConfiguration
     public MicrocksConfiguration(MicrocksConfiguration oldValue, MicrocksConfiguration newValue)
         : base(oldValue, newValue)
     {
+        Snapshots = BuildConfiguration.Combine(oldValue.Snapshots, newValue.Snapshots);
+        MainArtifacts = BuildConfiguration.Combine(oldValue.MainArtifacts, newValue.MainArtifacts);
+        SecondaryArtifacts = BuildConfiguration.Combine(oldValue.SecondaryArtifacts, newValue.SecondaryArtifacts);
+        MainRemoteArtifacts = BuildConfiguration.Combine(oldValue.MainRemoteArtifacts, newValue.MainRemoteArtifacts);
+        SecondaryRemoteArtifacts = BuildConfiguration.Combine(oldValue.SecondaryRemoteArtifacts, newValue.SecondaryRemoteArtifacts);
+        Secrets = BuildConfiguration.Combine(oldValue.Secrets, newValue.Secrets);
     }
+
+    /// <summary>
+    /// Gets the snapshots to import into the Microcks container.
+    /// </summary>
+    public IEnumerable<string> Snapshots { get; }
+
+    /// <summary>
+    /// Gets the main artifacts to import into the Microcks container.
+    /// </summary>
+    public IEnumerable<string> MainArtifacts { get; }
+
+    /// <summary>
+    /// Gets the secondary artifacts to import into the Microcks container.
+    /// </summary>
+    public IEnumerable<string> SecondaryArtifacts { get; }
+
+    /// <summary>
+    /// Gets the main remote artifacts to download into the Microcks container.
+    /// </summary>
+    public IEnumerable<RemoteArtifact> MainRemoteArtifacts { get; }
+
+    /// <summary>
+    /// Gets the secondary remote artifacts to download into the Microcks container.
+    /// </summary>
+    public IEnumerable<RemoteArtifact> SecondaryRemoteArtifacts { get; }
+
+    /// <summary>
+    /// Gets the secrets to create into the Microcks container.
+    /// </summary>
+    public IEnumerable<Model.Secret> Secrets { get; }
 }
