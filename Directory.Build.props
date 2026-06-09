@@ -3,7 +3,7 @@
 	<PropertyGroup>
 		<PackageId>$(AssemblyName)</PackageId>
 		<VersionPrefix>0.3.4</VersionPrefix>
-		<VersionSuffix>alpha</VersionSuffix>
+<!-- 		<VersionSuffix>alpha</VersionSuffix> -->
 
 		<Description>Microcks.Testcontainers for .NET</Description>
 		<Authors>Sébastien DEGODEZ</Authors>
