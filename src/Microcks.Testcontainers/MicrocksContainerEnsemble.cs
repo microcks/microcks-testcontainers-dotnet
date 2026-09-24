@@ -53,6 +53,7 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     public MicrocksContainer MicrocksContainer { get; private set; }
 
     private readonly INetwork _network;
+    private readonly bool _ownsNetwork;
 
     /// <summary>
     /// Gets the Docker network used by this ensemble.
@@ -66,21 +67,25 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
     /// Initializes a new instance of the <see cref="MicrocksContainerEnsemble"/> class.
     /// </summary>
     /// <param name="microcksImage">The name of the Microcks image to be used.</param>
+    /// <remarks>The ensemble owns and disposes the network created by this constructor.</remarks>
     public MicrocksContainerEnsemble(string microcksImage)
         : this(new NetworkBuilder().Build(), microcksImage)
     {
+        this._ownsNetwork = true;
     }
 
     /// <summary>
     /// Initializes a new instance of the <see cref="MicrocksContainerEnsemble"/> class.
     /// </summary>
-    /// <param name="network">The network to be used by the Microcks container ensemble.</param>
+    /// <param name="network">The caller-owned network to be used by the Microcks container ensemble.</param>
     /// <param name="microcksImage">The name of the Microcks image to be used.</param>
+    /// <remarks>The caller remains responsible for disposing <paramref name="network"/>.</remarks>
     [SuppressMessage("Security", "S5332", Justification = "HTTP is used intentionally for container-to-container communication in unit/integration tests on localhost")]
     public MicrocksContainerEnsemble(INetwork network, string microcksImage)
     {
         this._microcksImage = microcksImage;
         this._network = network;
+        this._ownsNetwork = false;
 
         this._microcksBuilder = new MicrocksBuilder(this._microcksImage)
             .WithNetwork(this._network)
@@ -321,6 +326,11 @@ public class MicrocksContainerEnsemble : IAsyncDisposable, IArtifactAndSnapshotM
         if (this.MicrocksContainer != null)
         {
             await this.MicrocksContainer.DisposeAsync();
+        }
+
+        if (this._ownsNetwork)
+        {
+            await this._network.DisposeAsync();
         }
         
         GC.SuppressFinalize(this);
