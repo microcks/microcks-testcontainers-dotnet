@@ -45,7 +45,7 @@ public sealed class MicrocksDebugLogLevelTests
         await ensemble.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert - Use Docker Inspect API to verify environment variables
-        using var dockerClient = new Docker.DotNet.DockerClientConfiguration().CreateClient();
+        using var dockerClient = new Docker.DotNet.DockerClientBuilder().Build();
 
         // Verify Microcks container has the debug environment variable
         var microcksInspect = await dockerClient.Containers.InspectContainerAsync(
@@ -82,7 +82,7 @@ public sealed class MicrocksDebugLogLevelTests
         await ensemble.StartAsync(TestContext.Current.CancellationToken);
 
         // Assert - Use Docker Inspect API to verify environment variables are NOT set
-        using var dockerClient = new Docker.DotNet.DockerClientConfiguration().CreateClient();
+        using var dockerClient = new Docker.DotNet.DockerClientBuilder().Build();
 
         // Verify Microcks container does NOT have the debug environment variable
         var microcksInspect = await dockerClient.Containers.InspectContainerAsync(
