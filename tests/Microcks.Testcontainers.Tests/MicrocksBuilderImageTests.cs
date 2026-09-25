@@ -53,7 +53,7 @@ public sealed class MicrocksBuilderImageTests
 
         Assert.Equal(CustomImage, container.Image.FullName);
 
-        using var dockerClient = new Docker.DotNet.DockerClientConfiguration().CreateClient();
+        using var dockerClient = new Docker.DotNet.DockerClientBuilder().Build();
         var inspect = await dockerClient.Containers.InspectContainerAsync(
             container.Id,
             TestContext.Current.CancellationToken);
